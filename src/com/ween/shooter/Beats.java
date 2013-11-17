@@ -2,6 +2,8 @@ package com.ween.shooter;
 
 import java.util.Queue;
 
+import android.util.Log;
+
 /**
  * Keeps track of the rhythm (temporary class name)
  */
@@ -15,25 +17,30 @@ public class Beats {
 	// Player attempt result types
 	public final static int RESULT_GOOD = 0;
 	public final static int RESULT_BAD = 1;
-	public final static int RESULT_WAY_OFF = 2;
-	public final static int RESULT_NO_REMAINING_BEATS = 3;
+	public final static int RESULT_MISS = 2;
+	public final static int RESULT_WAY_OFF = 3;
+	public final static int RESULT_NO_REMAINING_BEATS = 4;
 	
+	// Time in milliseconds
 	private final static long LEEWAY = 200; 
-	private final static long MISSED = 200;
+	private final static long MISSED = 300;
+	
+	private final static String BEATS_TAG = "Beats";
 	
 	Beats(Queue<Long> timings) {
 		this.timings = timings;
-		currentBeat = timings.remove();
+		currentBeat = timings.remove();	
 	}
 	
-	public int wasSuccess(long currentTime) {
+	// Determines if the player was on beat, moves to the next time stamp regardless of success
+	public int pollSuccess(long currentTime) {
 		if (currentBeat == null) {
 			return RESULT_NO_REMAINING_BEATS;
 		} else if (currentTime > currentBeat - LEEWAY && currentTime < currentBeat + LEEWAY) {
 			// Attempted and on beat (move to next beat)
 			currentBeat = timings.poll();
 			return RESULT_GOOD;
-		} else if (currentTime > currentBeat - MISSED && currentTime < currentBeat + MISSED) {
+		} else if (currentTime > currentBeat - LEEWAY - MISSED && currentTime < currentBeat + LEEWAY + MISSED) {
 			// Attempted but off beat (move to next beat)
 			currentBeat = timings.poll();
 			return RESULT_BAD;
@@ -43,8 +50,8 @@ public class Beats {
 		}
 	}
 	
-	// Used for testing 
-	public int wasSuccessNotVolatile(long currentTime) {
+	// Determines the current state rhythm state, moves to next time stamp ONLY if the user missed the beat
+	public int peekSuccess(long currentTime) {
 		if (currentBeat == null) {
 			return RESULT_NO_REMAINING_BEATS;
 		} else if (currentTime > currentBeat - LEEWAY && currentTime < currentBeat + LEEWAY) {
@@ -53,7 +60,7 @@ public class Beats {
 			return RESULT_BAD;
 		} else if (currentTime > currentBeat + LEEWAY + MISSED) {
 			currentBeat = timings.poll();
-			return RESULT_BAD;
+			return RESULT_MISS;
 		} else {
 			return RESULT_WAY_OFF;
 		}

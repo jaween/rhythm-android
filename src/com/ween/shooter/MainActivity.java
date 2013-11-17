@@ -36,7 +36,6 @@ public class MainActivity extends Activity implements OnTouchListener {
 
 	@Override
 	public boolean onTouch(View v, MotionEvent event) {
-		mainSurface.touched(v, event);
-		return false;
+		return mainSurface.touched(v, event);
 	}
 }
