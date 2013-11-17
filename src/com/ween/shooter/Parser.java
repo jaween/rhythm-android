@@ -12,6 +12,7 @@ import android.util.Log;
 
 /**
  * Parses files containing time stamps into a list of 'Long' values
+ * Simple support for comments
  */
 
 public class Parser {
