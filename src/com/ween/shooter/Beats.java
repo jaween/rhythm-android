@@ -8,6 +8,8 @@ import android.util.Log;
  * Keeps track of the rhythm (temporary class name)
  */
 
+
+
 public class Beats {
 	
 	// Keep track of rhythm
@@ -27,12 +29,22 @@ public class Beats {
 	
 	private final static String BEATS_TAG = "Beats";
 	
+	private RhythmEvent rhythmEvent;
+	
+	interface RhythmEvent {
+		void nextEvent();
+	}
+	
 	Beats(Queue<Long> timings) {
 		this.timings = timings;
 		currentBeat = timings.remove();	
 	}
 	
-	// Determines if the player was on beat, moves to the next time stamp regardless of success
+	public void setRhythmEvent(RhythmEvent rhythmEvent) {
+		this.rhythmEvent = rhythmEvent;
+	}
+	
+	// Determines if the player was on beat, moves to the next time stamp regardless of outcome
 	public int pollSuccess(long currentTime) {
 		if (currentBeat == null) {
 			return RESULT_NO_REMAINING_BEATS;
@@ -45,13 +57,20 @@ public class Beats {
 			currentBeat = timings.poll();
 			return RESULT_BAD;
 		} else {
-			// Not a legitimate attempt
+			// Not a legitimate attempt (do nothing)
 			return RESULT_WAY_OFF;
 		}
 	}
 	
-	// Determines the current state rhythm state, moves to next time stamp ONLY if the user missed the beat
+	// Determines the rhythm state, moves to next time stamp ONLY if the user missed the beat
 	public int peekSuccess(long currentTime) {
+		//
+		if (rhythmEvent != null && currentBeat != null && currentTime >= currentBeat) {
+			currentBeat = timings.poll();
+			rhythmEvent.nextEvent();
+			return RESULT_GOOD;
+		}
+		
 		if (currentBeat == null) {
 			return RESULT_NO_REMAINING_BEATS;
 		} else if (currentTime > currentBeat - LEEWAY && currentTime < currentBeat + LEEWAY) {
