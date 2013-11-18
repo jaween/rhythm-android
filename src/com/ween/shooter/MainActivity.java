@@ -2,6 +2,7 @@ package com.ween.shooter;
 
 import android.os.Bundle;
 import android.app.Activity;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MotionEvent;
@@ -16,7 +17,11 @@ public class MainActivity extends Activity implements OnTouchListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		mainSurface = new MainSurface(getApplicationContext());
+		// Screen information used when drawing (dimensions, dp value, etc.)
+		DisplayMetrics metrics = new DisplayMetrics();
+		getWindowManager().getDefaultDisplay().getMetrics(metrics);
+		
+		mainSurface = new MainSurface(getApplicationContext(), metrics);
 		mainSurface.setOnTouchListener(this);
 		
 		setContentView(mainSurface);

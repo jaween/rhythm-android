@@ -8,6 +8,16 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 
+/**
+ * Simple graphics that can be animated
+ * 
+ * In order to display, sprites must do the following:
+ *    Inherit from Sprite (this class)
+ *    Load a sprite sheet (typically in constructor of subclass)
+ *    Have their coordinates set (setCoordinates() function)
+ *    Have their visibility set to true (setVisibility() function)
+ */
+
 public class Sprite {
 	
 	// Position variables
@@ -18,17 +28,18 @@ public class Sprite {
 	protected Rect destRect;
 	
 	// Sprite variables
-	protected static Bitmap spriteSheet;
+	protected Bitmap spriteSheet;
 	protected boolean visible = false;
 	protected Rect sourceRect;
 	protected Paint paint;
 	protected int scale = 3;
 	
 	// Animation variables
-	protected float spriteSpeed = 0.2f;
-	protected float frameIndexFloat;
-	protected int frameIndex;
-	protected int numberOfFrames;
+	protected float spriteSpeed = 0.3f;
+	protected float frameIndexFloat = 0;
+	protected int frameIndex = 0;
+	protected int numberOfFrames = 1;
+	protected boolean looping = false;
 
 	// Used to access drawables
 	protected Context context;
@@ -55,6 +66,16 @@ public class Sprite {
 		return y;
 	}
 	
+	// Returns the scaled width as that is useful for lay out
+	public int getWidth() {
+		return width*scale;
+	}
+	
+	// Returns the scaled height as that is useful for lay out
+	public int getHeight() {
+		return height*scale;
+	}
+	
 	public void setVisible(boolean visible) {
 		this.visible = visible;
 	}
@@ -65,6 +86,10 @@ public class Sprite {
 	
 	protected void setScale(int scale) {
 		this.scale = scale;
+	}
+	
+	public int getScale() {
+		return scale;
 	}
 	
 	protected void loadSpriteSheet(int drawableID, int width, int height) {
@@ -78,13 +103,24 @@ public class Sprite {
 		if (frameIndex < numberOfFrames - 1) {
 			frameIndexFloat += spriteSpeed;
 		} else {
-			//visible = false;
-			frameIndexFloat = 0;
-			frameIndex = 0;
+			restartAnimation();
+			
+			if (!looping) 
+				visible = false;
+			
 			return;
 		}
 		frameIndex = (int) frameIndexFloat;
 		sourceRect.set(frameIndex*width, 0, (frameIndex+1)*width, height);
+	}
+	
+	public void restartAnimation() {
+		frameIndexFloat = 0;
+		frameIndex = 0;
+	}
+	
+	public void setLooping(boolean looping) {
+		this.looping = looping;
 	}
 	
 	public void draw(Canvas canvas) {

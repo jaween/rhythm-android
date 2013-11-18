@@ -15,9 +15,9 @@ public class Laser extends Sprite {
 	Laser(Context context) {
 		super(context);
 		
-		width = 44;
-		height = 89;
 		numberOfFrames = 8;
-		loadSpriteSheet(R.drawable.rapper, width, height);
+		width = 15;
+		height = 173;
+		loadSpriteSheet(R.drawable.laser_strip, width, height);
 	}
 }

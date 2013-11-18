@@ -2,6 +2,7 @@ package com.ween.shooter;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -25,7 +26,7 @@ public class MainSurface extends SurfaceView implements Runnable {
 	private final static int SKIP_TICKS = 1000 / MAX_FPS;
 	private long beginTime;
 	
-	public MainSurface(Context context) {
+	public MainSurface(Context context, DisplayMetrics metrics) {
 		super(context);
 		setFocusable(true);
 		
@@ -39,7 +40,7 @@ public class MainSurface extends SurfaceView implements Runnable {
 		eventBeats = new Beats(parser.parse(event_beats));
 		
 		// Creates a level (loads in graphics and audio)
-		level = new ShooterLevel(context, eventBeats, playerBeats);
+		level = new ShooterLevel(context, metrics, eventBeats, playerBeats);
 	}
 	
 	@Override
@@ -70,10 +71,7 @@ public class MainSurface extends SurfaceView implements Runnable {
 			} else {
 				// We're behind
 			}
-			
-			
 		}
-		
 	}
 	
 	// Called from the parent Activity's onPause
@@ -89,7 +87,7 @@ public class MainSurface extends SurfaceView implements Runnable {
 			break;
 		}
 		
-		// End music
+		// Ends level and music
 		level.onPause();
 		
 		thread = null;
@@ -101,7 +99,7 @@ public class MainSurface extends SurfaceView implements Runnable {
 		thread = new Thread(this);
 		thread.start();
 		
-		// Begin music (begins level)
+		// Begin level and music
 		level.onResume();
 	}
 
