@@ -29,6 +29,7 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 	
 	// Keeps track of instances
 	private ArrayList<ShooterEnemy> enemies;
+	private ArrayList<Star> stars;
 	private ShooterEnemy currentEnemy;
 	private Laser laser;
 	private Earth earth;
@@ -97,6 +98,15 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 		explosion = new Explosion(context);
 		explosion.setCoordinates(screenWidth/2 - explosion.getWidth()/2, screenHeight/2 - explosion.getHeight()/2);
 		
+		// Background stars
+		int numberOfStars = 30;
+		stars = new ArrayList<Star>(numberOfStars);
+		for (int i = 0; i < numberOfStars; i++) {
+			Star star = new Star(context);
+			randomiseStarValues(star);
+			star.setVisible(true);
+			stars.add(star);
+		}
 	}
 	
 	private void initialiseAudio() {
@@ -109,6 +119,14 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 	public void update(long time) {
 		peekState();
 		animate();
+		
+		for (Star star : stars)
+			if (star.isVisible())
+				star.update();
+			else {
+				randomiseStarValues(star);
+				star.setVisible(true);
+			}
 	}
 	
 	// Events that are triggered at certain times
@@ -156,6 +174,13 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 		soundPool.play(laserAudioID, 1, 1, 1, 0, 1);
 	}
 	
+	private void randomiseStarValues(Star star) {
+		int  marginHorz = screenWidth/5;	// We don't want stars created at the edge of screen, margins fix this
+		int  marginVert = screenHeight/5;
+		star.setCoordinates((float) (Math.random()*(screenWidth-marginHorz)+marginHorz/2), (float) (Math.random()*(screenHeight-marginVert)+marginVert/2));
+		star.setDirection((int) (star.getX() - screenWidth/2), (int) (star.getY() - screenHeight/2)); // Slope from center of screen to star
+	}
+	
 	@Override
 	public void draw(Canvas canvas) {
 		// Background
@@ -164,6 +189,10 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 		if (earth.isVisible()) {
 			earth.draw(canvas);
 		}
+		
+		// Background stars
+		for (Star star : stars)
+			star.draw(canvas);
 		
 		// Center orange circle
 		debugPaint.setColor(colour);
@@ -187,7 +216,7 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 		if (laser.isVisible())
 			laser.draw(canvas);
 		
-		// Laser
+		// Explosion
 		if (explosion.isVisible())
 			explosion.draw(canvas);
 	}

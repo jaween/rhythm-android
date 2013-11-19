@@ -67,6 +67,14 @@ public class Sprite {
 	public int getScale() {
 		return scale;
 	}
+	
+	public void setSpriteSpeed(float speed) {
+		this.spriteSpeed = speed;
+	}
+	
+	public float getSpriteSpeed() {
+		return spriteSpeed;
+	}
 
 	public void setAnimated(boolean animated) {
 		this.animated = animated;
@@ -82,7 +90,7 @@ public class Sprite {
 			return true;
 			
 		// Slower animations are achieved using a frameIndexFloat that is incremented slowly
-		if (frameIndex < numberOfFrames - 1) {
+		if (frameIndex <= numberOfFrames - 1) {
 			frameIndexFloat += spriteSpeed;
 			frameIndex = (int) frameIndexFloat;
 			sourceRect.set(frameIndex*width, 0, (frameIndex+1)*width, height);
