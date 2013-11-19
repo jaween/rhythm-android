@@ -24,7 +24,8 @@ public class Parser {
 
 	// Special parsing characters
 	private final static String SEPARATOR = ",";
-	private final static String COMMENT = "//";
+	private final static String COMMENT_REGEX = "//.*";
+	private final static String WHITESPACE_REGEX = "[\t ]+";
 	private final static String COLON = ":";
 	
 	Parser(Context context) {
@@ -32,6 +33,7 @@ public class Parser {
 		this.context = context;
 	}
 	
+	// Extracts time stamps from an input file 
 	public Queue<Long> parse(String filename) {	
 		// Used to enqueue the time stamps
 		Queue<Long> timings = new LinkedList<Long>();
@@ -44,8 +46,14 @@ public class Parser {
 		while (line != null) {
 			String[] values = line.split(SEPARATOR);
 			for (String value : values) {
-				if (!value.startsWith(COMMENT) && !value.isEmpty())
-					timings.add(Long.valueOf(value.trim().replace(COLON, "")));
+				// Remove unnecessary characters
+				value = value.replaceAll(COMMENT_REGEX, "");	// Comments ('//' followed by any character)
+				value = value.replaceAll(WHITESPACE_REGEX, "");	// Tabs and spaces
+				value = value.replace(COLON, "");				// Time stamp colons
+				
+				// String should now be empty or contain a time stamp
+				if (!value.isEmpty())
+					timings.add(Long.valueOf(value));
 			}
 			
 			// Next iteration

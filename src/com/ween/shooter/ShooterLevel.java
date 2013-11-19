@@ -9,7 +9,6 @@ import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.media.AudioManager;
 import android.media.SoundPool;
-import android.text.style.TextAppearanceSpan;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -30,13 +29,17 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 	
 	// Keeps track of instances
 	private ArrayList<ShooterEnemy> enemies;
+	private ShooterEnemy currentEnemy;
 	private Laser laser;
+	private Earth earth;
+	private Explosion explosion;
 	
 	// Sound effect IDs
 	private int laserAudioID;
 	
 	// Game variables
 	private String playerResult = "";
+	private int backgroundColour;
 	
 	// System variables
 	private Context context;
@@ -46,7 +49,7 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 		this.context = context;
 		
 		// Load in resources
-		initialiseInstances();
+		initialiseResources();
 		initialisePaints();
 		initialiseAudio();
 		
@@ -67,7 +70,10 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 		debugTextPaint.setTextAlign(Align.LEFT);
 	}
 	
-	private void initialiseInstances() {		
+	private void initialiseResources() {	
+		// Get colours
+		backgroundColour = context.getResources().getColor(R.color.background_colour);
+		
 		// Create the reusable enemy objects
 		final int maxEnemies = 8;
 		enemies = new ArrayList<ShooterEnemy>(maxEnemies);
@@ -83,6 +89,13 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 		// Gun 'stand' and face
 		//Gunner gunner = new Gunner();
 		// Gun barrel
+		
+		earth = new Earth(context);
+		earth.setCoordinates(screenWidth/5 - earth.getWidth()/2, screenHeight/5 - earth.getHeight()/2);
+		earth.setVisible(true);
+		
+		explosion = new Explosion(context);
+		explosion.setCoordinates(screenWidth/2 - explosion.getWidth()/2, screenHeight/2 - explosion.getHeight()/2);
 		
 	}
 	
@@ -117,15 +130,19 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 		case 3:
 			enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
 			enemies.get(3).setVisible(true);
+			currentEnemy = enemies.get(0);
 			break;
 		case 4:
 			enemies.get(0).setVisible(false);
+			currentEnemy = enemies.get(1);
 			break;
 		case 5:
 			enemies.get(1).setVisible(false);
+			currentEnemy = enemies.get(2);
 			break;
 		case 6:
 			enemies.get(2).setVisible(false);
+			currentEnemy = enemies.get(3);
 			break;
 		case 7:
 			enemies.get(3).setVisible(false);
@@ -134,7 +151,7 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 	}
 	
 	private void animateGunner() {
-		laser.restartAnimation();
+		laser.startAnimation();
 		laser.setVisible(true);
 		soundPool.play(laserAudioID, 1, 1, 1, 0, 1);
 	}
@@ -142,7 +159,11 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 	@Override
 	public void draw(Canvas canvas) {
 		// Background
-		canvas.drawColor(Color.BLACK);
+		canvas.drawColor(backgroundColour);
+		
+		if (earth.isVisible()) {
+			earth.draw(canvas);
+		}
 		
 		// Center orange circle
 		debugPaint.setColor(colour);
@@ -158,16 +179,17 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 		lastDrawTime = System.currentTimeMillis();
 		
 		// Pink enemy circles
-		for (ShooterEnemy enemy : enemies) {
+		for (ShooterEnemy enemy : enemies)
 			if (enemy.isVisible())
 				enemy.draw(canvas);
-		}
 		
 		// Laser
-		if (laser.isVisible()) {
+		if (laser.isVisible())
 			laser.draw(canvas);
-			laser.nextFrame();
-		}
+		
+		// Laser
+		if (explosion.isVisible())
+			explosion.draw(canvas);
 	}
 	
 	private void peekState() {	
@@ -202,10 +224,14 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 			int result = playerBeats.pollSuccess(System.currentTimeMillis() - beginTime);
 			switch (result) {
 			case Beats.RESULT_GOOD:
+				currentEnemy.setShotType(ShooterEnemy.SHOT_MAJOR_HIT);
+				explosion.setVisible(true);
 				playerResult = "Good";
 				colour = 0xFFFF9900;
 				break;
 			case Beats.RESULT_BAD:
+				currentEnemy.setShotType(ShooterEnemy.SHOT_MINOR_HIT);
+				explosion.setVisible(true);
 				playerResult = "Bad";
 				colour = 0x44FF9900;
 				break;
@@ -238,6 +264,7 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 
 	@Override
 	public void onPause() {
+		// Free-up memory
 		soundPool.release();
 		soundPool = null;
 		super.onPause();
@@ -245,10 +272,8 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 
 	@Override
 	public void onResume() {
+		// Reload audio clips
 		initialiseAudio();
 		super.onResume();
 	}
-	
-	
-
 }

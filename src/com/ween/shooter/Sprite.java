@@ -20,68 +20,44 @@ import android.graphics.drawable.Drawable;
 
 public class Sprite {
 	
-	// Position variables
-	protected float x;
-	protected float y;
+	// Dimension variables
 	protected int width;
 	protected int height;
-	protected Rect destRect;
 	
-	// Sprite variables
+	// Display variables
 	protected Bitmap spriteSheet;
-	protected boolean visible = false;
 	protected Rect sourceRect;
 	protected Paint paint;
 	protected int scale = 3;
 	
 	// Animation variables
+	protected boolean animated = true;
 	protected float spriteSpeed = 0.3f;
 	protected float frameIndexFloat = 0;
 	protected int frameIndex = 0;
 	protected int numberOfFrames = 1;
 	protected boolean looping = false;
-
-	// Used to access drawables
-	protected Context context;
 	
-	Sprite(Context context) {
-		this.context = context;
-		paint = new Paint();
-		destRect = new Rect();
-	}
-	
-	public void setCoordinates(float x, float y) {
-		this.x = x;
-		this.y = y;
+	Sprite(Bitmap spriteSheet, Rect sourceRect, int frames, boolean looping) {
+		this.spriteSheet = spriteSheet;
+		this.sourceRect = sourceRect;
+		this.numberOfFrames = frames;
+		this.looping = looping;
 		
-		// Updates the rectangle within which the sprite will be drawn (also upscales sprite)
-		destRect.set((int) x, (int) y, (int) (x + width*scale), (int) (y + height*scale));
+		width = sourceRect.width();
+		height = sourceRect.height();
+		
+		paint = new Paint();
 	}
 	
-	public float getX() {
-		return x;
-	}
-	
-	public float getY() {
-		return y;
-	}
-	
-	// Returns the scaled width as that is useful for lay out
+	// Returns the scaled width (useful for layout)
 	public int getWidth() {
 		return width*scale;
 	}
 	
-	// Returns the scaled height as that is useful for lay out
+	// Returns the scaled height (useful for layout)
 	public int getHeight() {
 		return height*scale;
-	}
-	
-	public void setVisible(boolean visible) {
-		this.visible = visible;
-	}
-	
-	public boolean isVisible() {
-		return visible;
 	}
 	
 	protected void setScale(int scale) {
@@ -91,27 +67,33 @@ public class Sprite {
 	public int getScale() {
 		return scale;
 	}
-	
-	protected void loadSpriteSheet(int drawableID, int width, int height) {
-		Drawable drawable = context.getResources().getDrawable(drawableID);
-		spriteSheet = ((BitmapDrawable) drawable).getBitmap();
-		sourceRect = new Rect(0, 0, width, height);
+
+	public void setAnimated(boolean animated) {
+		this.animated = animated;
 	}
 	
-	protected void nextFrame() {
+	public boolean getAnimated() {
+		return animated;
+	}
+	// Returns true if there are more frames to display (if looping, always returns true)
+	protected boolean nextFrame() {
+		// Static images should be visible unless otherwise stated
+		if (!animated)
+			return true;
+			
 		// Slower animations are achieved using a frameIndexFloat that is incremented slowly
 		if (frameIndex < numberOfFrames - 1) {
 			frameIndexFloat += spriteSpeed;
+			frameIndex = (int) frameIndexFloat;
+			sourceRect.set(frameIndex*width, 0, (frameIndex+1)*width, height);
 		} else {
 			restartAnimation();
+			sourceRect.set(frameIndex*width, 0, (frameIndex+1)*width, height);
 			
 			if (!looping) 
-				visible = false;
-			
-			return;
+				return false;
 		}
-		frameIndex = (int) frameIndexFloat;
-		sourceRect.set(frameIndex*width, 0, (frameIndex+1)*width, height);
+		return true;
 	}
 	
 	public void restartAnimation() {
@@ -122,8 +104,8 @@ public class Sprite {
 	public void setLooping(boolean looping) {
 		this.looping = looping;
 	}
-	
-	public void draw(Canvas canvas) {
+
+	public void draw(Canvas canvas, Rect destRect) {
 		canvas.drawBitmap(spriteSheet, sourceRect, destRect, paint);
 	}
 }

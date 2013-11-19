@@ -10,14 +10,16 @@ import android.graphics.drawable.Drawable;
  * Laser which the player shoots at the enemies
  */
 
-public class Laser extends Sprite {
+public class Laser extends Entity {
 	
 	Laser(Context context) {
 		super(context);
 		
-		numberOfFrames = 8;
-		width = 15;
-		height = 173;
-		loadSpriteSheet(R.drawable.laser_strip, width, height);
+		int drawableID = R.drawable.laser_strip;
+		int width = 15;
+		int height = 173;
+		int frames = 8;
+		boolean looping = false;
+		loadSpriteSheet(drawableID, width, height, frames, looping);
 	}
 }
