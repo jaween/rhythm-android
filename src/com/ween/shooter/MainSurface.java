@@ -32,15 +32,10 @@ public class MainSurface extends SurfaceView implements Runnable {
 		
 		holder = getHolder();
 		
-		// Loads in the timing data
-		final String player_beats = "shooter_player.time";
-		final String event_beats = "shooter_event.time";
-		Parser parser = new Parser(context);
-		playerBeats = new Beats(parser.parse(player_beats));
-		eventBeats = new Beats(parser.parse(event_beats));
-		
 		// Creates a level (loads in graphics and audio)
-		level = new ShooterLevel(context, metrics, eventBeats, playerBeats);
+		String playerBeatsFilename = "shooter_player.time";
+		String eventBeatsFilename = "shooter_event.time";
+		level = new ShooterLevel(context, metrics, playerBeatsFilename, eventBeatsFilename);
 	}
 	
 	@Override
@@ -57,6 +52,11 @@ public class MainSurface extends SurfaceView implements Runnable {
 			Canvas c = holder.lockCanvas();
 			level.draw(c);								// Draw
 			holder.unlockCanvasAndPost(c);
+			// TODO Crashed once when starting the game
+			// IMGSRV	Cannot ungregister a locked buffer
+			// Surface	Surface::unlockAndPost failed, no locked buffer
+			// At line holder.unlockAndPost(c) 
+			// Why? Maybe use a try/catch block
 			
 			// Sleeps until next frame
 			nextGameTick += SKIP_TICKS;

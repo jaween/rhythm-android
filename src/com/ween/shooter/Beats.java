@@ -14,7 +14,7 @@ public class Beats {
 	
 	// Keep track of rhythm
 	private Queue<Long> timings;	// All beats
-	private Long currentBeat;		// Head of queue
+	private Long currentBeat;		// Head of queue (the beat that is just about to come up)
 	
 	// Player attempt result types
 	public final static int RESULT_GOOD = 0;
@@ -24,8 +24,8 @@ public class Beats {
 	public final static int RESULT_NO_REMAINING_BEATS = 4;
 	
 	// Time in milliseconds
-	private final static long LEEWAY = 200; 
-	private final static long MISSED = 300;
+	public final static long LEEWAY = 200; 
+	public final static long MISSED = 300;
 	
 	private final static String BEATS_TAG = "Beats";
 	
@@ -42,6 +42,14 @@ public class Beats {
 	
 	public void setRhythmEvent(RhythmEvent rhythmEvent) {
 		this.rhythmEvent = rhythmEvent;
+	}
+	
+	public long getCurrentBeat() {
+		return currentBeat;
+	}
+	
+	public int getSize() {
+		return timings.size();
 	}
 	
 	// Determines if the player was on beat, moves to the next time stamp regardless of outcome
@@ -66,8 +74,8 @@ public class Beats {
 	public int peekSuccess(long currentTime) {
 		//
 		if (rhythmEvent != null && currentBeat != null && currentTime >= currentBeat) {
-			currentBeat = timings.poll();
 			rhythmEvent.nextEvent();
+			currentBeat = timings.poll();
 			return RESULT_GOOD;
 		}
 		

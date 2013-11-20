@@ -1,6 +1,8 @@
 package com.ween.shooter;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -14,18 +16,10 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
-public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
+public class ShooterLevel extends Choreographer {
 
 	// Debug variables
-	private int colour = Color.BLUE;
-	private Paint debugPaint = new Paint();
-	private Paint debugTextPaint = new Paint();
 	private final static String SHOOTER_LEVEL_TAG = "ShooterLevel";
-	
-	// Timing variables
-	private long beginTime;
-	private long lastDrawTime;
-	private int eventIndex = -1;
 	
 	// Keeps track of instances
 	private ArrayList<ShooterEnemy> enemies;
@@ -39,36 +33,18 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 	private int laserAudioID;
 	
 	// Game variables
-	private String playerResult = "";
 	private int backgroundColour;
 	
 	// System variables
 	private Context context;
 	
-	ShooterLevel(Context context, DisplayMetrics metrics, Beats eventBeats, Beats playerBeats) {
-		super(context, metrics, eventBeats, playerBeats);
+	ShooterLevel(Context context, DisplayMetrics metrics, String playerBeatsFilename, String eventBeatsFilename) {
+		super(context, metrics, playerBeatsFilename, eventBeatsFilename);
 		this.context = context;
 		
 		// Load in resources
 		initialiseResources();
-		initialisePaints();
 		initialiseAudio();
-		
-		// Callback to be notified of beats (automatic event triggers)
-		eventBeats.setRhythmEvent(this);
-		
-		// All timings are relative to the this
-		beginTime = System.currentTimeMillis();
-		lastDrawTime = beginTime;
-	}
-	
-	private void initialisePaints() {
-		// Debug Paints
-		debugPaint.setAntiAlias(true);
-		debugTextPaint.setColor(Color.WHITE);
-		debugTextPaint.setAntiAlias(true);
-		debugTextPaint.setTextSize(40);
-		debugTextPaint.setTextAlign(Align.LEFT);
 	}
 	
 	private void initialiseResources() {	
@@ -92,7 +68,7 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 		// Gun barrel
 		
 		earth = new Earth(context);
-		earth.setCoordinates(screenWidth/5 - earth.getWidth()/2, screenHeight/5 - earth.getHeight()/2);
+		earth.setCoordinates(screenWidth/4 - earth.getWidth()/2, screenHeight/5 - earth.getHeight()/2);
 		earth.setVisible(true);
 		
 		explosion = new Explosion(context);
@@ -117,9 +93,9 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 	
 	@Override
 	public void update(long time) {
-		peekState();
-		animate();
+		super.update(time);
 		
+		// Background stars
 		for (Star star : stars)
 			if (star.isVisible())
 				star.update();
@@ -130,7 +106,8 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 	}
 	
 	// Events that are triggered at certain times
-	private void animate() {
+	@Override
+	protected void animate() {
 		
 		switch (eventIndex) {
 		case 0:
@@ -151,19 +128,31 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 			currentEnemy = enemies.get(0);
 			break;
 		case 4:
-			enemies.get(0).setVisible(false);
+			if (enemies.get(0).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
+				//Log.d(SHOOTER_LEVEL_TAG, "Attack!");
+				enemies.get(0).setVisible(false);
+			}
 			currentEnemy = enemies.get(1);
 			break;
 		case 5:
-			enemies.get(1).setVisible(false);
+			if (enemies.get(1).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
+				//Log.d(SHOOTER_LEVEL_TAG, "Attack!");
+				enemies.get(1).setVisible(false);
+			}
 			currentEnemy = enemies.get(2);
 			break;
 		case 6:
-			enemies.get(2).setVisible(false);
+			if (enemies.get(2).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
+				//Log.d(SHOOTER_LEVEL_TAG, "Attack!");
+				enemies.get(2).setVisible(false);
+			}
 			currentEnemy = enemies.get(3);
 			break;
 		case 7:
-			enemies.get(3).setVisible(false);
+			if (enemies.get(3).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
+				//Log.d(SHOOTER_LEVEL_TAG, "Attack!");
+				enemies.get(3).setVisible(false);
+			}
 			break;
 		}
 	}
@@ -186,26 +175,15 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 		// Background
 		canvas.drawColor(backgroundColour);
 		
-		if (earth.isVisible()) {
+		if (earth.isVisible())
 			earth.draw(canvas);
-		}
+		
+		// Debug info
+		super.draw(canvas);
 		
 		// Background stars
 		for (Star star : stars)
 			star.draw(canvas);
-		
-		// Center orange circle
-		debugPaint.setColor(colour);
-		canvas.drawCircle(screenWidth/2, 400, 100, debugPaint);
-		
-		// Timer
-		String time = Float.toString(((float) (System.currentTimeMillis() - beginTime))/1000f);
-		canvas.drawText(time, screenWidth/2 - 55, 550, debugTextPaint);
-		canvas.drawText(playerResult, screenWidth/2 - 55, 600, debugTextPaint);
-		
-		// FPS Indicator
-		canvas.drawText((1000/(System.currentTimeMillis() - lastDrawTime)) + " FPS", 30, 60, debugTextPaint);
-		lastDrawTime = System.currentTimeMillis();
 		
 		// Pink enemy circles
 		for (ShooterEnemy enemy : enemies)
@@ -220,77 +198,36 @@ public class ShooterLevel extends Choreographer implements Beats.RhythmEvent {
 		if (explosion.isVisible())
 			explosion.draw(canvas);
 	}
-	
-	private void peekState() {	
-		eventBeats.peekSuccess(System.currentTimeMillis() - beginTime);
-		int result = playerBeats.peekSuccess(System.currentTimeMillis() - beginTime);
-		switch (result) {
-		case Beats.RESULT_GOOD:
-			colour = 0xFFFF9900;
-			break;
-		case Beats.RESULT_BAD:
-			colour = 0x44FF9900;
-			break;
-		case Beats.RESULT_WAY_OFF:
-			colour = 0x11FF9900;
-			break;
-		case Beats.RESULT_MISS:
-			playerResult = "Miss";
-			break;
-		case Beats.RESULT_NO_REMAINING_BEATS:
-			colour = 0x11993366;
-			playerResult = "終わり";
-			break;
-		}
-	}
 
 	@Override
 	public boolean onTouch(View v, MotionEvent event) {
-		switch(event.getAction()) {
-		case MotionEvent.ACTION_DOWN:
+		if (event.getAction() == MotionEvent.ACTION_DOWN) {
 			animateGunner();
-			
-			int result = playerBeats.pollSuccess(System.currentTimeMillis() - beginTime);
-			switch (result) {
+		
+			super.onTouch(v, event);
+		
+			switch (timingResult) { 
 			case Beats.RESULT_GOOD:
 				currentEnemy.setShotType(ShooterEnemy.SHOT_MAJOR_HIT);
 				explosion.setVisible(true);
-				playerResult = "Good";
-				colour = 0xFFFF9900;
+				debugTimingResult = "Good";
 				break;
 			case Beats.RESULT_BAD:
 				currentEnemy.setShotType(ShooterEnemy.SHOT_MINOR_HIT);
 				explosion.setVisible(true);
-				playerResult = "Bad";
-				colour = 0x44FF9900;
+				debugTimingResult = "Bad";
 				break;
 			case Beats.RESULT_WAY_OFF:
-				playerResult = "Way off";
-				colour = 0x11FF9900;
+				debugTimingResult = "Way off";
 				break;
 			case Beats.RESULT_NO_REMAINING_BEATS:
-				Log.d(SHOOTER_LEVEL_TAG, "None remaining");
-				playerResult = "終わり";
-				colour = 0x11993366;
+				debugTimingResult = "終わり";
 				break;
 			}
-			break;
-		case MotionEvent.ACTION_UP:
-			//
-			break;
-		case MotionEvent.ACTION_CANCEL:
-			//
-			break;
+		}
+		return false;
 	}
-	return false;
-	}
-
-	@Override
-	public void nextEvent() {
-		eventIndex++;	
-		Log.d(SHOOTER_LEVEL_TAG, "eventIndex is now " + eventIndex);
-	}
-
+	
 	@Override
 	public void onPause() {
 		// Free-up memory
