@@ -1,4 +1,4 @@
-package com.ween.shooter;
+package com.ween.rhythm;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -11,6 +11,7 @@ import android.graphics.Paint.Align;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
+import android.os.SystemClock;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -18,26 +19,28 @@ import android.view.View;
 
 /**
  * Manages music, tracking score, instances, input, player actions, various events, etc.
- * Levels must inherit from this class 
+ * Levels must inherit from this class
+ *
+ * ISSUES
+ *      If a timer is running future events will be delayed until the timer has finished
+ *      or is destroyed, even if the subsequent event MUST occur on beat (e.g. an enemy appearing).
+ *      This could be a problem between the end of a player's round of inputs and the beginning
+ *      of the next round that starts with automatic events.
  */
 
 public abstract class Choreographer implements Beats.RhythmEvent {
-	
-	// Debug variables
-	private int timingCircleColour = Color.BLUE;
-	protected String debugTimingResult = ""; // Text on screen ('Miss', etc.)
 	
 	// Game variables
 	protected int score = 0;
 	
 	// Gameplay timing variables
-	protected Beats eventBeats;				// E.g. pea being flicked at player (automatic event)
-	protected Beats playerBeats;			// E.g. fork stabbing pea by player (player's action)
+	protected Beats eventBeats;				// e.g. pea being flicked at player (automatic event)
+	protected Beats playerBeats;			// e.g. fork stabbing pea by player (player's action)
 	
 	// Implementation timing variables
 	protected int eventIndex = -1;			// Events are triggered by looking at this index
-	private Queue<Long> timers;				// The remaining time between the musical 'beat' and the accepted leeway
-	private long beginTime;	
+	private Queue<Long> timers;				// The remaining time between the musical 'beat' and the leeway (a few milliseconds)
+	protected long beginTime;
 	private long lastDrawTime;				// Determines when to draw the next frame
 	protected int timingResult;
 
@@ -50,33 +53,32 @@ public abstract class Choreographer implements Beats.RhythmEvent {
 	protected SoundPool soundPool;			// Sound effects
 	protected MediaPlayer mediaPlayer;		// Background music
 	protected AudioManager audioManager;	// System audio info (volumes, etc.)
-	
-	// Grants access to system services
+
 	protected Context context;
 	
 	// Paints
 	private Paint debugPaint = new Paint();
 	private Paint debugTextPaint = new Paint();
+
+    // Debug variables
+    private static final String TAG = "Choreographer";
+    private int timingCircleColour = Color.BLUE;
+    protected String debugTimingResult = ""; // On screen text ('Miss', etc.)
 	
-	
-	Choreographer(Context context, DisplayMetrics metrics, String playerBeatsFilename, String eventBeatsFilename) {
+	public Choreographer(Context context, DisplayMetrics metrics, String playerBeatsFilename, String eventBeatsFilename) {
 		this.context = context;
-		this.eventBeats = eventBeats;
-		this.playerBeats = playerBeats;
 		
 		dp = metrics.density;
 		screenWidth = metrics.widthPixels;
 		screenHeight = metrics.heightPixels;
 		
 		loadBeats(playerBeatsFilename, eventBeatsFilename);
-		
-		// Used to get system volume, etc.
+
 		audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
 		
 		// Used when determining if the player was on beat
 		timers = new LinkedList<Long>();
-		
-		
+
 		// Callback to be notified of beats (event triggers, e.g. enemies appearing on beat)
 		eventBeats.setRhythmEvent(this);
 		
@@ -105,10 +107,13 @@ public abstract class Choreographer implements Beats.RhythmEvent {
 		// until the end of the range of accepted on beat times (i.e. the actual beat plus the leeway)
 		// Thus if the player misses the beat, the event is triggered afterward (e.g. enemy attacking the player)
 		// but if the player reacts within the accepted range, the event is triggered BY THE PLAYER
-		
-		if (playerBeats.getCurrentBeat() == eventBeats.getCurrentBeat()) {
+        Log.d(TAG, "Current player beat is " + playerBeats.getCurrentBeat() + ", current event beat is " + eventBeats.getCurrentBeat());
+        Long playerBeat = playerBeats.getCurrentBeat();
+        Long eventBeat = eventBeats.getCurrentBeat();
+		if (playerBeat != null && eventBeat != null && playerBeat.longValue() <= eventBeat.longValue()) {
 			// We achieve the delay using a queue of timers
-			timers.add(eventBeats.getCurrentBeat() + eventBeats.LEEWAY + eventBeats.MISSED);
+            Log.d(TAG, "Timer added");
+			timers.add(eventBeats.getCurrentBeat() + Beats.LEEWAY + Beats.MISSED);
 		} else {
 			eventIndex++;
 		}
@@ -118,16 +123,26 @@ public abstract class Choreographer implements Beats.RhythmEvent {
 	
 	public void update(long time) {
 		if (!timers.isEmpty()) {
-			if (System.currentTimeMillis() - beginTime >= timers.peek())
+			if (SystemClock.elapsedRealtime() - beginTime >= timers.peek())
 			{
-				// Event has been delayed, remove timer
+                // TODO Crashed at condition with NullPointerException, why?
+                // Just beore first enemy appeared
+
+
+				// Event delay has finished, remove timer
 				timers.remove();
+                Log.d(TAG, "Timer finished");
+
+                // Removes failed player event
+                // If we passed in the current time, it would be considered 'way off' and wouldn't poll
+                playerBeats.pollSuccess(playerBeats.getCurrentBeat());
 				
 				// We can now trigger the delayed event (e.g. enemy attacking player)
-				nextEvent();
+				//nextEvent();
+                eventIndex++;
 			}
 		}
-		
+
 		peekState();
 		animate();
 	}
@@ -138,49 +153,52 @@ public abstract class Choreographer implements Beats.RhythmEvent {
 		canvas.drawCircle(screenWidth/2, 400, 100, debugPaint);
 		
 		// Timer
-		String time = Float.toString(((float) (System.currentTimeMillis() - beginTime))/1000f);
+		String time = Float.toString(((float) (SystemClock.elapsedRealtime() - beginTime))/1000f);
 		canvas.drawText(time, screenWidth/2 - 55, 550, debugTextPaint);
 		canvas.drawText(debugTimingResult, screenWidth/2 - 55, 600, debugTextPaint);
 		
 		// FPS Indicator
-		canvas.drawText((1000/(System.currentTimeMillis() - lastDrawTime)) + " FPS", 30, 60, debugTextPaint);
-		lastDrawTime = System.currentTimeMillis();
+		canvas.drawText((1000/(SystemClock.elapsedRealtime() - lastDrawTime)) + " FPS", 30, 60, debugTextPaint);
+		lastDrawTime = SystemClock.elapsedRealtime();
 	}
 	
 	public boolean onTouch(View v, MotionEvent event) {
 		// TODO Rework this code, too untidy
-		int result;
-		long timeOfTouch = System.currentTimeMillis() - beginTime;
-		Log.d("Choreo", "Curret event beat is " + eventBeats.getCurrentBeat() + "(" + timeOfTouch + "), there are " + timers.size() + " timers");
+		final int result;
+		long timeOfTouch = SystemClock.elapsedRealtime() - beginTime;
+		Log.d(TAG, "Touched! Current event beat is " + eventBeats.getCurrentBeat() + "(" + timeOfTouch + "), there are " + timers.size() + " timers");
 		if (!timers.isEmpty()) {
 			long timerValue = timers.remove();
+
 			if (timeOfTouch < timerValue - Beats.MISSED)
 				result = Beats.RESULT_GOOD;
 			else if (timeOfTouch < timerValue)
 				result = Beats.RESULT_BAD;
 			else
 				result = Beats.RESULT_MISS;
-			Log.d("Choreo", "Result is " + result);
+			Log.d(TAG, "Timer destroyed! Result is " + result);
 			eventIndex++;
-			eventBeats.pollSuccess(timeOfTouch);
+
 			playerBeats.pollSuccess(timeOfTouch);
 		} else {
-			Log.d("Choreo", "There are no timers");
-			long prePollPlayerBeat = playerBeats.getCurrentBeat();
+			Long prePollPlayerBeat = playerBeats.getCurrentBeat();
 			result = playerBeats.pollSuccess(timeOfTouch);
 			if (result == Beats.RESULT_GOOD || result == Beats.RESULT_BAD) {
-				eventIndex++;
-				if (prePollPlayerBeat == eventBeats.getCurrentBeat())
-					eventBeats.pollSuccess(timeOfTouch);
+				//eventIndex++;
+				if (prePollPlayerBeat == eventBeats.getCurrentBeat()) {
+                    eventBeats.pollSuccess(timeOfTouch);
+                }
 			}
 		}
 		timingResult = result;
 		return false;	
 	}
-	
+
 	private void peekState() {	
-		eventBeats.peekSuccess(System.currentTimeMillis() - beginTime);
-		int result = playerBeats.peekSuccess(System.currentTimeMillis() - beginTime);
+		eventBeats.peekSuccess(SystemClock.elapsedRealtime() - beginTime);
+
+        // Purely used for debugging
+		/*int result = playerBeats.peekSuccess(SystemClock.elapsedRealtime() - beginTime);
 		switch (result) {
 		case Beats.RESULT_GOOD:
 			timingCircleColour = 0xFFFF9900;
@@ -198,16 +216,16 @@ public abstract class Choreographer implements Beats.RhythmEvent {
 			timingCircleColour = 0x11993366;
 			debugTimingResult = "終わり";
 			break;
-		}
+		}*/
 	}
 	
 	protected void playSound(int id) {
-		float streamVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-		streamVolume = streamVolume / audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+		final float streamVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+		final float streamVolumeNormalised = streamVolume / audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
 		
-		soundPool.play(id, streamVolume, streamVolume, 1, 0, 1f);
+		soundPool.play(id, streamVolumeNormalised, streamVolumeNormalised, 1, 0, 1f);
 	}
-	
+
 	protected void loadBackgroundMusic(int resourceID) {
 		mediaPlayer = MediaPlayer.create(context, resourceID);
 	}
@@ -216,8 +234,8 @@ public abstract class Choreographer implements Beats.RhythmEvent {
 	public void onPause() {
 		if (mediaPlayer != null) {
 			mediaPlayer.stop();
-			/*mediaPlayer.release();
-			mediaPlayer = null;*/
+			mediaPlayer.release();
+			mediaPlayer = null;
 		}
 	}
 	
@@ -232,7 +250,7 @@ public abstract class Choreographer implements Beats.RhythmEvent {
 		}
 		
 		// All timings are relative to the this
-		beginTime = System.currentTimeMillis();
+		beginTime = SystemClock.elapsedRealtime();
 		lastDrawTime = beginTime;
 	}
 }

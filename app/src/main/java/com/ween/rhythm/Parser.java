@@ -1,4 +1,4 @@
-package com.ween.shooter;
+package com.ween.rhythm;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,8 +17,6 @@ import android.util.Log;
 
 public class Parser {
 	
-	private final static String PARSER_TAG = "Parser";
-	
 	private Context context;
 	private BufferedReader bufferedReader;
 
@@ -27,6 +25,8 @@ public class Parser {
 	private final static String COMMENT_REGEX = "//.*";
 	private final static String WHITESPACE_REGEX = "[\t ]+";
 	private final static String COLON = ":";
+
+    private final static String TAG = "Parser";
 	
 	Parser(Context context) {
 		// Context is required to access the assets directory
@@ -43,21 +43,28 @@ public class Parser {
 		String line = readLine();
 		
 		// Steps through line by line and adds the time stamps to a list
+        int lineNumber = 1;
 		while (line != null) {
-			String[] values = line.split(SEPARATOR);
+			String clearedLine = line.replaceAll(COMMENT_REGEX, "");			// Comments ('//' followed by any character)
+			String[] values = clearedLine.split(SEPARATOR);
 			for (String value : values) {
 				// Remove unnecessary characters
-				value = value.replaceAll(COMMENT_REGEX, "");	// Comments ('//' followed by any character)
 				value = value.replaceAll(WHITESPACE_REGEX, "");	// Tabs and spaces
 				value = value.replace(COLON, "");				// Time stamp colons
 				
 				// String should now be empty or contain a time stamp
 				if (!value.isEmpty())
-					timings.add(Long.valueOf(value));
+                    try {
+                        timings.add(Long.valueOf(value));
+                    } catch (NumberFormatException e) {
+                        Log.e(TAG, "Line " + lineNumber + " is invalid (" + line + ")");
+                        continue;
+                    }
 			}
 			
 			// Next iteration
 			line = readLine();
+            lineNumber++;
 		} 
 		
 		return timings;
@@ -69,7 +76,7 @@ public class Parser {
 			// Our file must be located within the assets directory
 			inputStream = context.getResources().getAssets().open(filename);
 		} catch (IOException e) {
-			Log.e(PARSER_TAG, "Couldn't find '" + filename + "' in assets directory");
+			Log.e(TAG, "Couldn't find '" + filename + "' in assets directory");
 			e.printStackTrace();
 		}
 		InputStreamReader streamReader = new InputStreamReader(inputStream);

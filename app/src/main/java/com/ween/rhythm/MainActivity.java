@@ -1,4 +1,4 @@
-package com.ween.shooter;
+package com.ween.rhythm;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -16,13 +16,14 @@ public class MainActivity extends Activity implements OnTouchListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		// Screen information used when drawing (dimensions, dp value, etc.)
+		// Display info used when drawing (dimensions, dp value, etc.)
 		DisplayMetrics metrics = new DisplayMetrics();
 		getWindowManager().getDefaultDisplay().getMetrics(metrics);
 		
-		// Hide ActionBar (TODO Disable in Manifest for all supported SDK versions instead)
+		// Hides ActionBar (TODO Disable in Manifest for all supported SDK versions instead)
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		
+
+
 		mainSurface = new MainSurface(getApplicationContext(), metrics);
 		mainSurface.setOnTouchListener(this);
 		

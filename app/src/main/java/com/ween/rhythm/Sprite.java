@@ -1,12 +1,9 @@
-package com.ween.shooter;
+package com.ween.rhythm;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 
 /**
  * Simple graphics that can be animated
@@ -38,7 +35,7 @@ public class Sprite {
 	protected int numberOfFrames = 1;
 	protected boolean looping = false;
 	
-	Sprite(Bitmap spriteSheet, Rect sourceRect, int frames, boolean looping) {
+	public Sprite(Bitmap spriteSheet, Rect sourceRect, int frames, boolean looping) {
 		this.spriteSheet = spriteSheet;
 		this.sourceRect = sourceRect;
 		this.numberOfFrames = frames;
@@ -60,7 +57,7 @@ public class Sprite {
 		return height*scale;
 	}
 	
-	protected void setScale(int scale) {
+	public void setScale(int scale) {
 		this.scale = scale;
 	}
 	
@@ -83,8 +80,23 @@ public class Sprite {
 	public boolean getAnimated() {
 		return animated;
 	}
+	
+	public int getFrames() {
+		return numberOfFrames;
+	}
+	
+	public void setFrame(int frame) {
+		this.frameIndex = frame;
+		this.frameIndexFloat = frame;
+		updateSourceRect();
+	}
+	
+	private void updateSourceRect() {
+		sourceRect.set(frameIndex*width, 0, (frameIndex+1)*width, height);
+	}
+	
 	// Returns true if there are more frames to display (if looping, always returns true)
-	protected boolean nextFrame() {
+	public boolean nextFrame() {
 		// Static images should be visible unless otherwise stated
 		if (!animated)
 			return true;
@@ -93,20 +105,16 @@ public class Sprite {
 		if (frameIndex <= numberOfFrames - 1) {
 			frameIndexFloat += spriteSpeed;
 			frameIndex = (int) frameIndexFloat;
-			sourceRect.set(frameIndex*width, 0, (frameIndex+1)*width, height);
+			updateSourceRect();
+			
 		} else {
-			restartAnimation();
-			sourceRect.set(frameIndex*width, 0, (frameIndex+1)*width, height);
+			setFrame(0);
+			updateSourceRect();
 			
 			if (!looping) 
 				return false;
 		}
 		return true;
-	}
-	
-	public void restartAnimation() {
-		frameIndexFloat = 0;
-		frameIndex = 0;
 	}
 	
 	public void setLooping(boolean looping) {

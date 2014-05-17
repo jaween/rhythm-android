@@ -1,10 +1,9 @@
-package com.ween.shooter;
+package com.ween.rhythm.shooter;
 
 import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
+
+import com.ween.rhythm.Entity;
+import com.ween.shooter.R;
 
 /**
  * Laser which the player shoots at the enemies

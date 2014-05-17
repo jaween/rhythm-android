@@ -1,11 +1,14 @@
-package com.ween.shooter;
+package com.ween.rhythm.shooter;
 
 import android.content.Context;
+
+import com.ween.rhythm.Entity;
+import com.ween.shooter.R;
 
 public class Star extends Entity {
 
 	private float[] direction = { 0, 0 };
-	private int speed;
+	private float speed;
 	
 	Star(Context context) {
 		super(context);
@@ -17,8 +20,10 @@ public class Star extends Entity {
 		boolean looping = false;
 		loadSpriteSheet(drawableID, width, height, frames, looping);
 		
-		float minSpeed = 0.02f;
-		currentSprite.setSpriteSpeed((float) (Math.random() * minSpeed + minSpeed));
+		currentSprite.setAnimated(false);
+		
+		setRandomFrame();
+		setRandomSpeed();
 	}
 
 	public void setDirection(int xstep, int ystep) {
@@ -27,10 +32,20 @@ public class Star extends Entity {
 		direction[0] = xstep/norm;
 		direction[1] = ystep/norm;
 	}
-
+	
+	public void setRandomFrame() {
+		int frame = (int) (Math.random() * currentSprite.getFrames());
+		currentSprite.setFrame(frame);
+	}
+	
+	public void setRandomSpeed() {
+		int averageSpeed = 1; // This isn't really average speed, but can't I think of a better name
+		float minSpeed = 0.5f;
+		speed = (float) (Math.random() * averageSpeed) + minSpeed;
+	}
+	
 	@Override
 	public void update() {
-		float speed = 1; //currentSprite.getSpriteSpeed();
 		setCoordinates(x + direction[0]*speed, y + direction[1]*speed);
 		super.update();
 	}

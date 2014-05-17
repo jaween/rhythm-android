@@ -1,4 +1,4 @@
-package com.ween.shooter;
+package com.ween.rhythm;
 
 import java.util.ArrayList;
 
@@ -8,6 +8,8 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+
+import com.ween.rhythm.Sprite;
 
 /**
  * Game objects, visible or not (enemies, lasers, etc.)
@@ -28,7 +30,7 @@ public class Entity {
 	// Used to access drawables
 	protected Context context;
 	
-	Entity(Context context) {
+	public Entity(Context context) {
 		this.context = context;
 		destRect = new Rect();
 		sprites = new ArrayList<Sprite>(1);
@@ -77,7 +79,7 @@ public class Entity {
 	}
 	
 	public void startAnimation() {
-		currentSprite.restartAnimation();
+		currentSprite.setFrame(0);
 	}
 	
 	// Loads a drawable (animated or not) and assigns it to a Sprite

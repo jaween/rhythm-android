@@ -1,6 +1,9 @@
-package com.ween.shooter;
+package com.ween.rhythm.shooter;
 
 import android.content.Context;
+
+import com.ween.rhythm.Entity;
+import com.ween.shooter.R;
 
 public class ShooterEnemy extends Entity {
 	
@@ -30,13 +33,13 @@ public class ShooterEnemy extends Entity {
 		loadSpriteSheet(drawableID, width, height, frames, looping);
 		currentSprite.setAnimated(false);*/
 		
-		// Trail in from top left
+		/*// Trail in from top left
 		drawableID = R.drawable.trail_from_top_left_strip;
 		width = 53;
 		height = 69;
 		frames = 2;
 		looping = false;
-		loadSpriteSheet(drawableID, width, height, frames, looping);
+		loadSpriteSheet(drawableID, width, height, frames, looping);*/
 		
 		currentSprite = sprites.get(0);
 		
@@ -47,10 +50,14 @@ public class ShooterEnemy extends Entity {
 		this.shotType = shotType;
 		switch (shotType) {
 			case SHOT_MAJOR_HIT: 
-			currentSprite = sprites.get(1);
+			//currentSprite = sprites.get(1);
+			visible = false;
 			break;
 			case SHOT_MINOR_HIT:
 			visible = false;
+			break;
+			case SHOT_NOT_HIT: 
+			//currentSprite = sprites.get(0);
 			break;
 		}
 	}

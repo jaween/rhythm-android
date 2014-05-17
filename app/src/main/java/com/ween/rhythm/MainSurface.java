@@ -1,4 +1,4 @@
-package com.ween.shooter;
+package com.ween.rhythm;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -8,13 +8,14 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
+import com.ween.rhythm.shooter.ShooterLevel;
+
 public class MainSurface extends SurfaceView implements Runnable {
 
-	// 
+	// Loop variables
 	private Thread thread;
 	private boolean run;
 	private SurfaceHolder holder;
-	private final static String MAIN_SURFACE_TAG = "MainSurface";
 	
 	// Game variables
 	private Beats playerBeats;
@@ -25,6 +26,8 @@ public class MainSurface extends SurfaceView implements Runnable {
 	private final static int MAX_FPS = 60;
 	private final static int SKIP_TICKS = 1000 / MAX_FPS;
 	private long beginTime;
+
+    private final static String TAG = "MainSurface";
 	
 	public MainSurface(Context context, DisplayMetrics metrics) {
 		super(context);
@@ -32,7 +35,7 @@ public class MainSurface extends SurfaceView implements Runnable {
 		
 		holder = getHolder();
 		
-		// Creates a level (loads in graphics and audio)
+		// Creates level
 		String playerBeatsFilename = "shooter_player.time";
 		String eventBeatsFilename = "shooter_event.time";
 		level = new ShooterLevel(context, metrics, playerBeatsFilename, eventBeatsFilename);
@@ -57,6 +60,11 @@ public class MainSurface extends SurfaceView implements Runnable {
 			// Surface	Surface::unlockAndPost failed, no locked buffer
 			// At line holder.unlockAndPost(c) 
 			// Why? Maybe use a try/catch block
+
+            // TODO Crashed once when resuming the game
+            // IMGSRV   :0: gralloc_unregister_buffer: Cannot unregister a locked buffer (ID=33633)
+            // Surface  Surface::unlockAndPost failed, no locked buffer
+            // Could be same problem as above
 			
 			// Sleeps until next frame
 			nextGameTick += SKIP_TICKS;
@@ -65,16 +73,15 @@ public class MainSurface extends SurfaceView implements Runnable {
 				try {
 					Thread.sleep(sleepTime);
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			} else {
-				// We're behind
+				// Skipped frames
 			}
 		}
 	}
 	
-	// Called from the parent Activity's onPause
+	// Called from parent's onPause()
 	public void onPause() {
 		run = false;
 		
@@ -92,18 +99,18 @@ public class MainSurface extends SurfaceView implements Runnable {
 		
 		thread = null;
 	}
-	
-	// Called from the parent Activity's onResume
+
+    // Called from parent's onResume()
 	public void onResume() {
 		run = true;
 		thread = new Thread(this);
 		thread.start();
 		
-		// Begin level and music
+		// Begins level and music
 		level.onResume();
 	}
 
-	// Called from parent Activity's onTouch
+    // Called from parent's onTouch()
 	public boolean touched(View v, MotionEvent event) {
 		return level.onTouch(v, event);
 	}

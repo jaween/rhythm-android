@@ -1,6 +1,9 @@
-package com.ween.shooter;
+package com.ween.rhythm.shooter;
 
 import android.content.Context;
+
+import com.ween.rhythm.Entity;
+import com.ween.shooter.R;
 
 public class Explosion extends Entity {
 

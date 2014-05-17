@@ -1,14 +1,12 @@
-package com.ween.shooter;
-
-import java.util.Queue;
+package com.ween.rhythm;
 
 import android.util.Log;
+
+import java.util.Queue;
 
 /**
  * Keeps track of the rhythm (temporary class name)
  */
-
-
 
 public class Beats {
 	
@@ -17,17 +15,17 @@ public class Beats {
 	private Long currentBeat;		// Head of queue (the beat that is just about to come up)
 	
 	// Player attempt result types
-	public final static int RESULT_GOOD = 0;
-	public final static int RESULT_BAD = 1;
-	public final static int RESULT_MISS = 2;
-	public final static int RESULT_WAY_OFF = 3;
-	public final static int RESULT_NO_REMAINING_BEATS = 4;
+	public final static int RESULT_GOOD = 0;                // On beat
+	public final static int RESULT_BAD = 1;                 // Just off beat
+	public final static int RESULT_MISS = 2;                // Completely off beat
+	public final static int RESULT_WAY_OFF = 3;             // Not a real attempt (not counted)
+	public final static int RESULT_NO_REMAINING_BEATS = 4;  // End of song
 	
 	// Time in milliseconds
-	public final static long LEEWAY = 200; 
-	public final static long MISSED = 300;
+	public final static long LEEWAY = 40;
+	public final static long MISSED = 80;
 	
-	private final static String BEATS_TAG = "Beats";
+	private final static String TAG = "Beats";
 	
 	private RhythmEvent rhythmEvent;
 	
@@ -37,14 +35,14 @@ public class Beats {
 	
 	Beats(Queue<Long> timings) {
 		this.timings = timings;
-		currentBeat = timings.remove();	
+		currentBeat = timings.remove();
 	}
 	
 	public void setRhythmEvent(RhythmEvent rhythmEvent) {
 		this.rhythmEvent = rhythmEvent;
 	}
 	
-	public long getCurrentBeat() {
+	public Long getCurrentBeat() {
 		return currentBeat;
 	}
 	
@@ -52,7 +50,7 @@ public class Beats {
 		return timings.size();
 	}
 	
-	// Determines if the player was on beat, moves to the next time stamp regardless of outcome
+	// Determines if the player was on beat, moves to the next time stamp (if applicable)
 	public int pollSuccess(long currentTime) {
 		if (currentBeat == null) {
 			return RESULT_NO_REMAINING_BEATS;
