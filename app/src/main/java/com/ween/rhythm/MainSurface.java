@@ -21,27 +21,27 @@ public class MainSurface extends SurfaceView implements Runnable {
 	private Beats playerBeats;
 	private Beats eventBeats;
 	private ShooterLevel level;
-	
+
 	// Screen refresh variables
 	private final static int MAX_FPS = 60;
 	private final static int SKIP_TICKS = 1000 / MAX_FPS;
 	private long beginTime;
 
     private final static String TAG = "MainSurface";
-	
-	public MainSurface(Context context, DisplayMetrics metrics) {
+
+    public MainSurface(Context context, DisplayMetrics metrics, int windowHeight) {
 		super(context);
 		setFocusable(true);
-		
+
 		holder = getHolder();
-		
+
 		// Creates level
 		String playerBeatsFilename = "shooter_player.time";
 		String eventBeatsFilename = "shooter_event.time";
-		level = new ShooterLevel(context, metrics, playerBeatsFilename, eventBeatsFilename);
+		level = new ShooterLevel(context, metrics, playerBeatsFilename, eventBeatsFilename, windowHeight);
 	}
-	
-	@Override
+
+    @Override
 	public void run() {
 		beginTime = System.currentTimeMillis();
 		long nextGameTick = beginTime;

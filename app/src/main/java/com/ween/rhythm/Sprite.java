@@ -13,6 +13,7 @@ import android.graphics.Rect;
  *    Load a sprite sheet (typically in constructor of subclass)
  *    Have their coordinates set (setCoordinates() function)
  *    Have their visibility set to true (setVisibility() function)
+ *    Finally they must have their draw() function called
  */
 
 public class Sprite {
@@ -80,8 +81,8 @@ public class Sprite {
 	public boolean getAnimated() {
 		return animated;
 	}
-	
-	public int getFrames() {
+
+    public int getFrames() {
 		return numberOfFrames;
 	}
 	
@@ -90,7 +91,8 @@ public class Sprite {
 		this.frameIndexFloat = frame;
 		updateSourceRect();
 	}
-	
+
+    // Selects the current frame from the sprite sheet
 	private void updateSourceRect() {
 		sourceRect.set(frameIndex*width, 0, (frameIndex+1)*width, height);
 	}
@@ -101,19 +103,15 @@ public class Sprite {
 		if (!animated)
 			return true;
 			
-		// Slower animations are achieved using a frameIndexFloat that is incremented slowly
-		if (frameIndex <= numberOfFrames - 1) {
-			frameIndexFloat += spriteSpeed;
-			frameIndex = (int) frameIndexFloat;
-			updateSourceRect();
-			
-		} else {
+		// Slower animations are achieved using frameIndexFloat that is incremented slowly
+        frameIndexFloat += spriteSpeed;
+        frameIndex = (int) frameIndexFloat;
+		if (frameIndex >= numberOfFrames) {
 			setFrame(0);
-			updateSourceRect();
-			
-			if (!looping) 
+			if (!looping)
 				return false;
 		}
+        updateSourceRect();
 		return true;
 	}
 	

@@ -3,7 +3,7 @@ package com.ween.rhythm.shooter;
 import android.content.Context;
 
 import com.ween.rhythm.Entity;
-import com.ween.shooter.R;
+import com.ween.rhythm.R;
 
 /**
  * Laser which the player shoots at the enemies

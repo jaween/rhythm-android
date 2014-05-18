@@ -6,15 +6,13 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.media.AudioManager;
 import android.media.SoundPool;
-import android.os.SystemClock;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 import com.ween.rhythm.Beats;
 import com.ween.rhythm.Choreographer;
-import com.ween.shooter.R;
+import com.ween.rhythm.R;
 
 public class ShooterLevel extends Choreographer {
 
@@ -22,10 +20,11 @@ public class ShooterLevel extends Choreographer {
 	private final static String TAG = "ShooterLevel";
 	
 	// Keeps track of instances
-	private ArrayList<ShooterEnemy> enemies;
+	private ArrayList<Enemy> enemies;
 	private ArrayList<Star> stars;
-	private ShooterEnemy currentEnemy;
+	private Enemy currentEnemy;
 	private Laser laser;
+    private Gunner gunner;
 	private Earth earth;
 	private Explosion explosion;
 	
@@ -38,8 +37,8 @@ public class ShooterLevel extends Choreographer {
 	// System variables
 	private Context context;
 	
-	public ShooterLevel(Context context, DisplayMetrics metrics, String playerBeatsFilename, String eventBeatsFilename) {
-		super(context, metrics, playerBeatsFilename, eventBeatsFilename);
+	public ShooterLevel(Context context, DisplayMetrics metrics, String playerBeatsFilename, String eventBeatsFilename, int windowHeight) {
+		super(context, metrics, playerBeatsFilename, eventBeatsFilename, windowHeight);
 		this.context = context;
 		
 		// Load in resources
@@ -50,22 +49,23 @@ public class ShooterLevel extends Choreographer {
 	private void initialiseResources() {	
 		// Get colours
 		backgroundColour = context.getResources().getColor(R.color.background_colour);
-		
+
 		// Create the reusable enemy objects
 		final int maxEnemies = 8;
-		enemies = new ArrayList<ShooterEnemy>(maxEnemies);
+		enemies = new ArrayList<Enemy>(maxEnemies);
 		for (int i = 0; i < maxEnemies; i++) {
-			ShooterEnemy enemy = new ShooterEnemy(context);
+			Enemy enemy = new Enemy(context);
 			enemies.add(enemy);
 		}
 		
-		// Create the resuable laser object
-		laser = new Laser(context);	
-		laser.setCoordinates(screenWidth/2 - laser.getWidth()/2, screenHeight - 600);
-		
-		// Gun 'stand' and face
-		//Gunner gunner = new Gunner();
-		// Gun barrel
+		// Gun with canon and face
+		gunner = new Gunner(context);
+        gunner.setCoordinates(screenWidth / 2 - gunner.getWidth() / 2, screenHeight - gunner.getHeight());
+        gunner.setVisible(true);
+
+        // Create the resuable laser object
+        laser = new Laser(context);
+        laser.setCoordinates(screenWidth/2 - laser.getWidth()/2, screenHeight - laser.getHeight());
 		
 		earth = new Earth(context);
 		earth.setCoordinates(screenWidth/4 - earth.getWidth()/2, screenHeight/5 - earth.getHeight()/2);
@@ -113,165 +113,291 @@ public class ShooterLevel extends Choreographer {
 	// Events that are triggered at certain times
 	@Override
 	protected void animate() {
-		switch (eventIndex) {
-		case 0:
-            currentEnemy = enemies.get(0);
-			enemies.get(0).setCoordinates(screenWidth/6 - enemies.get(0).getWidth()/2, screenHeight/6 - enemies.get(0).getHeight()/2);
-			enemies.get(0).setVisible(true);
-			break;
-		case 1:
-			enemies.get(1).setCoordinates(screenWidth - screenWidth/6 - enemies.get(1).getWidth()/2, screenHeight/6 - enemies.get(1).getHeight()/2);
-			enemies.get(1).setVisible(true);
-			break;
-		case 2:
-			enemies.get(2).setCoordinates(screenWidth/6 - enemies.get(2).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(2).getHeight()/2);
-			enemies.get(2).setVisible(true);
-			break;
-		case 3:
-			enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
-			enemies.get(3).setVisible(true);
-			break;
-		case 4:
-			//if (enemies.get(0).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
-				enemies.get(0).setVisible(false);
-				enemies.get(0).setShotType(ShooterEnemy.SHOT_NOT_HIT);
-			//}
-			currentEnemy = enemies.get(1);
-			break;
-		case 5:
-			//if (enemies.get(1).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
-				enemies.get(1).setVisible(false);
-				enemies.get(1).setShotType(ShooterEnemy.SHOT_NOT_HIT);
-			//}
-			currentEnemy = enemies.get(2);
-			break;
-		case 6:
-			//if (enemies.get(2).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
-				enemies.get(2).setVisible(false);
-				enemies.get(2).setShotType(ShooterEnemy.SHOT_NOT_HIT);
-			//}
-			currentEnemy = enemies.get(3);
-			break;
-		case 7:
-			//if (enemies.get(3).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
-				enemies.get(3).setVisible(false);
-				enemies.get(3).setShotType(ShooterEnemy.SHOT_NOT_HIT);
-			//}
-			break;
-		case 8:
-			enemies.get(0).setCoordinates(screenWidth/6 - enemies.get(0).getWidth()/2, screenHeight/6 - enemies.get(0).getHeight()/2);
-			enemies.get(0).setVisible(true);
-			break;
-		case 9:
-			enemies.get(1).setCoordinates(screenWidth - screenWidth/6 - enemies.get(1).getWidth()/2, screenHeight/6 - enemies.get(1).getHeight()/2);
-			enemies.get(1).setVisible(true);
-			break;
-		case 10:
-			enemies.get(2).setCoordinates(screenWidth/6 - enemies.get(2).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(2).getHeight()/2);
-			enemies.get(2).setVisible(true);
-			break;
-		case 11:
-			enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
-			enemies.get(3).setVisible(true);
-			currentEnemy = enemies.get(0);
-			break;
-		case 12:
-			//if (enemies.get(0).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
-				enemies.get(0).setVisible(false);
-				enemies.get(0).setShotType(ShooterEnemy.SHOT_NOT_HIT);
-			//}
-			currentEnemy = enemies.get(1);
-			break;
-		case 13:
-			//if (enemies.get(1).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
-				enemies.get(1).setVisible(false);
-				enemies.get(1).setShotType(ShooterEnemy.SHOT_NOT_HIT);
-			//}
-			currentEnemy = enemies.get(2);
-			break;
-		case 14:
-			//if (enemies.get(2).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
-				enemies.get(2).setVisible(false);
-				enemies.get(2).setShotType(ShooterEnemy.SHOT_NOT_HIT);
-			//}
-			currentEnemy = enemies.get(3);
-			break;
-		case 15:
-			//if (enemies.get(3).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
-				enemies.get(3).setVisible(false);
-				enemies.get(3).setShotType(ShooterEnemy.SHOT_NOT_HIT);
-			//}
-			break;
-		case 16:
-			enemies.get(0).setCoordinates(screenWidth/6 - enemies.get(0).getWidth()/2, screenHeight/6 - enemies.get(0).getHeight()/2);
-			enemies.get(0).setVisible(true);
-			break;
-		case 17:
-			enemies.get(1).setCoordinates(screenWidth - screenWidth/6 - enemies.get(1).getWidth()/2, screenHeight/6 - enemies.get(1).getHeight()/2);
-			enemies.get(1).setVisible(true);
-			break;
-		case 18:
-			enemies.get(2).setCoordinates(screenWidth/6 - enemies.get(2).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(2).getHeight()/2);
-			enemies.get(2).setVisible(true);
-			break;
-		case 19:
-			enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
-			enemies.get(3).setVisible(true);
-			currentEnemy = enemies.get(0);
-			break;
-		case 20:
-			//if (enemies.get(0).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
-				enemies.get(0).setVisible(false);
-				enemies.get(0).setShotType(ShooterEnemy.SHOT_NOT_HIT);
-			//}
-			currentEnemy = enemies.get(1);
-			break;
-		case 21:
-			//if (enemies.get(1).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
-				enemies.get(1).setVisible(false);
-				enemies.get(1).setShotType(ShooterEnemy.SHOT_NOT_HIT);
-			//}
-			currentEnemy = enemies.get(2);
-			break;
-		case 22:
-			//if (enemies.get(2).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
-				enemies.get(2).setVisible(false);
-				enemies.get(2).setShotType(ShooterEnemy.SHOT_NOT_HIT);
-			//}
-			currentEnemy = enemies.get(3);
-			break;
-		case 23:
-			//if (enemies.get(3).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
-				enemies.get(3).setVisible(false);
-				enemies.get(3).setShotType(ShooterEnemy.SHOT_NOT_HIT);
-			//}
-			break;
-		case 24:
-			enemies.get(0).setCoordinates(screenWidth/3 - enemies.get(0).getWidth()/2, screenHeight/3 - enemies.get(0).getHeight()/2);
-			enemies.get(0).setVisible(true);
-			break;
-		case 25:
-			enemies.get(1).setCoordinates(screenWidth - screenWidth/3 - enemies.get(1).getWidth()/2, screenHeight/3 - enemies.get(1).getHeight()/2);
-			enemies.get(1).setVisible(true);
-			currentEnemy = enemies.get(0);
-			break;
-		case 26:
-			//if (enemies.get(0).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
-				enemies.get(0).setVisible(false);
-				enemies.get(0).setShotType(ShooterEnemy.SHOT_NOT_HIT);
-			//}
-			currentEnemy = enemies.get(1);
-			break;
-		case 27:
-			//if (enemies.get(1).getShotType() == ShooterEnemy.SHOT_NOT_HIT) {
-				enemies.get(1).setVisible(false);
-				enemies.get(1).setShotType(ShooterEnemy.SHOT_NOT_HIT);
-			//}
-			break;
+        switch (eventIndex) {
+            // FIRST WAVE
+            case 0:
+                currentEnemy = enemies.get(0);
+                enemies.get(0).setCoordinates(screenWidth/6 - enemies.get(0).getWidth()/2, screenHeight/6 - enemies.get(0).getHeight()/2);
+                enemies.get(0).setVisible(true);
+                break;
+            case 1:
+                enemies.get(1).setCoordinates(screenWidth - screenWidth/6 - enemies.get(1).getWidth()/2, screenHeight/6 - enemies.get(1).getHeight()/2);
+                enemies.get(1).setVisible(true);
+                break;
+            case 2:
+                enemies.get(2).setCoordinates(screenWidth/6 - enemies.get(2).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(2).getHeight()/2);
+                enemies.get(2).setVisible(true);
+                break;
+            case 3:
+                enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
+                enemies.get(3).setVisible(true);
+                break;
+            case 4:
+                enemies.get(0).setVisible(false);
+                enemies.get(0).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(1);
+                break;
+            case 5:
+                enemies.get(1).setVisible(false);
+                enemies.get(1).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(2);
+                break;
+            case 6:
+                enemies.get(2).setVisible(false);
+                enemies.get(2).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(3);
+                break;
+            case 7:
+                enemies.get(3).setVisible(false);
+                enemies.get(3).setShotType(Enemy.SHOT_NOT_HIT);
+                break;
+            case 8:
+                enemies.get(0).setCoordinates(screenWidth/6 - enemies.get(0).getWidth()/2, screenHeight/6 - enemies.get(0).getHeight()/2);
+                enemies.get(0).setVisible(true);
+                break;
+            case 9:
+                enemies.get(1).setCoordinates(screenWidth - screenWidth/6 - enemies.get(1).getWidth()/2, screenHeight/6 - enemies.get(1).getHeight()/2);
+                enemies.get(1).setVisible(true);
+                break;
+            case 10:
+                enemies.get(2).setCoordinates(screenWidth/6 - enemies.get(2).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(2).getHeight()/2);
+                enemies.get(2).setVisible(true);
+                break;
+            case 11:
+                enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
+                enemies.get(3).setVisible(true);
+                currentEnemy = enemies.get(0);
+                break;
+            case 12:
+                enemies.get(0).setVisible(false);
+                enemies.get(0).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(1);
+                break;
+            case 13:
+                enemies.get(1).setVisible(false);
+                enemies.get(1).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(2);
+                break;
+            case 14:
+                enemies.get(2).setVisible(false);
+                enemies.get(2).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(3);
+                break;
+            case 15:
+                enemies.get(3).setVisible(false);
+                enemies.get(3).setShotType(Enemy.SHOT_NOT_HIT);
+                break;
+            case 16:
+                enemies.get(0).setCoordinates(screenWidth/6 - enemies.get(0).getWidth()/2, screenHeight/6 - enemies.get(0).getHeight()/2);
+                enemies.get(0).setVisible(true);
+                break;
+            case 17:
+                enemies.get(1).setCoordinates(screenWidth - screenWidth/6 - enemies.get(1).getWidth()/2, screenHeight/6 - enemies.get(1).getHeight()/2);
+                enemies.get(1).setVisible(true);
+                break;
+            case 18:
+                enemies.get(2).setCoordinates(screenWidth/6 - enemies.get(2).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(2).getHeight()/2);
+                enemies.get(2).setVisible(true);
+                break;
+            case 19:
+                enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
+                enemies.get(3).setVisible(true);
+                currentEnemy = enemies.get(0);
+                break;
+            case 20:
+                enemies.get(0).setVisible(false);
+                enemies.get(0).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(1);
+                break;
+            case 21:
+                enemies.get(1).setVisible(false);
+                enemies.get(1).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(2);
+                break;
+            case 22:
+                enemies.get(2).setVisible(false);
+                enemies.get(2).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(3);
+                break;
+            case 23:
+                enemies.get(3).setVisible(false);
+                enemies.get(3).setShotType(Enemy.SHOT_NOT_HIT);
+                break;
+            case 24:
+                enemies.get(0).setCoordinates(screenWidth/3 - enemies.get(0).getWidth()/2, screenHeight/4 - enemies.get(0).getHeight()/2);
+                enemies.get(0).setVisible(true);
+                break;
+            case 25:
+                enemies.get(1).setCoordinates(screenWidth - screenWidth/3 - enemies.get(1).getWidth()/2, screenHeight/4 - enemies.get(1).getHeight()/2);
+                enemies.get(1).setVisible(true);
+                currentEnemy = enemies.get(0);
+                break;
+            case 26:
+                enemies.get(0).setVisible(false);
+                enemies.get(0).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(1);
+                break;
+            case 27:
+                enemies.get(1).setVisible(false);
+                enemies.get(1).setShotType(Enemy.SHOT_NOT_HIT);
+                break;
+            // SECOND WAVE
+            case 28:
+                enemies.get(0).setCoordinates(screenWidth/6 - enemies.get(0).getWidth()/2, screenHeight/6 - enemies.get(0).getHeight()/2);
+                enemies.get(0).setVisible(true);
+                break;
+            case 29:
+                enemies.get(1).setCoordinates(screenWidth - screenWidth/6 - enemies.get(1).getWidth()/2, screenHeight/6 - enemies.get(1).getHeight()/2);
+                enemies.get(1).setVisible(true);
+                break;
+            case 30:
+                enemies.get(2).setCoordinates(screenWidth/6 - enemies.get(2).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(2).getHeight()/2);
+                enemies.get(2).setVisible(true);
+                break;
+            case 31:
+                enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
+                enemies.get(3).setVisible(true);
+                currentEnemy = enemies.get(0);
+                break;
+            case 32:
+                enemies.get(0).setVisible(false);
+                enemies.get(0).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(1);
+                break;
+            case 33:
+                enemies.get(1).setVisible(false);
+                enemies.get(1).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(2);
+                break;
+            case 34:
+                enemies.get(2).setVisible(false);
+                enemies.get(2).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(3);
+                break;
+            case 35:
+                enemies.get(3).setVisible(false);
+                enemies.get(3).setShotType(Enemy.SHOT_NOT_HIT);
+                break;
+            case 36:
+                enemies.get(0).setCoordinates(screenWidth/6 - enemies.get(0).getWidth()/2, screenHeight/6 - enemies.get(0).getHeight()/2);
+                enemies.get(0).setVisible(true);
+                break;
+            case 37:
+                enemies.get(1).setCoordinates(screenWidth - screenWidth/6 - enemies.get(1).getWidth()/2, screenHeight/6 - enemies.get(1).getHeight()/2);
+                enemies.get(1).setVisible(true);
+                break;
+            case 38:
+                enemies.get(2).setCoordinates(screenWidth/6 - enemies.get(2).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(2).getHeight()/2);
+                enemies.get(2).setVisible(true);
+                break;
+            case 39:
+                enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
+                enemies.get(3).setVisible(true);
+                currentEnemy = enemies.get(0);
+                break;
+            case 40:
+                enemies.get(0).setVisible(false);
+                enemies.get(0).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(1);
+                break;
+            case 41:
+                enemies.get(1).setVisible(false);
+                enemies.get(1).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(2);
+                break;
+            case 42:
+                enemies.get(2).setVisible(false);
+                enemies.get(2).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(3);
+                break;
+            case 43:
+                enemies.get(3).setVisible(false);
+                enemies.get(3).setShotType(Enemy.SHOT_NOT_HIT);
+                break;
+            case 44:
+                enemies.get(0).setCoordinates(screenWidth/6 - enemies.get(0).getWidth()/2, screenHeight/6 - enemies.get(0).getHeight()/2);
+                enemies.get(0).setVisible(true);
+                break;
+            case 45:
+                enemies.get(1).setCoordinates(screenWidth - screenWidth/6 - enemies.get(1).getWidth()/2, screenHeight/6 - enemies.get(1).getHeight()/2);
+                enemies.get(1).setVisible(true);
+                break;
+            case 46:
+                enemies.get(2).setCoordinates(screenWidth/6 - enemies.get(2).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(2).getHeight()/2);
+                enemies.get(2).setVisible(true);
+                break;
+            case 47:
+                enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
+                enemies.get(3).setVisible(true);
+                currentEnemy = enemies.get(0);
+                break;
+            case 48:
+                enemies.get(0).setVisible(false);
+                enemies.get(0).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(1);
+                break;
+            case 49:
+                enemies.get(1).setVisible(false);
+                enemies.get(1).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(2);
+                break;
+            case 50:
+                enemies.get(2).setVisible(false);
+                enemies.get(2).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(3);
+                break;
+            case 51:
+                enemies.get(3).setVisible(false);
+                enemies.get(3).setShotType(Enemy.SHOT_NOT_HIT);
+                break;
+            case 52:
+                enemies.get(0).setCoordinates(screenWidth/6 - enemies.get(0).getWidth()/2, screenHeight/6 - enemies.get(0).getHeight()/2);
+                enemies.get(0).setVisible(true);
+                break;
+            case 53:
+                enemies.get(1).setCoordinates(screenWidth - screenWidth/6 - enemies.get(1).getWidth()/2, screenHeight/6 - enemies.get(1).getHeight()/2);
+                enemies.get(1).setVisible(true);
+                break;
+            case 54:
+                enemies.get(2).setCoordinates(screenWidth/6 - enemies.get(2).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(2).getHeight()/2);
+                enemies.get(2).setVisible(true);
+                break;
+            case 55:
+                enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
+                enemies.get(3).setVisible(true);
+                currentEnemy = enemies.get(0);
+                break;
+            case 56:
+                enemies.get(0).setVisible(false);
+                enemies.get(0).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(1);
+                break;
+            case 57:
+                enemies.get(1).setVisible(false);
+                enemies.get(1).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(2);
+                break;
+            case 58:
+                enemies.get(2).setVisible(false);
+                enemies.get(2).setShotType(Enemy.SHOT_NOT_HIT);
+                currentEnemy = enemies.get(3);
+                break;
+            case 59:
+                enemies.get(3).setVisible(false);
+                enemies.get(3).setShotType(Enemy.SHOT_NOT_HIT);
+                break;
 		}
 	}
-	
-	private void animateGunner() {
+
+    @Override
+    protected void miss() {
+        // Gunner is sad and wobbles for a second
+        gunner.startAnimation();
+    }
+
+    private void shoot() {
+        gunner.shoot();
+
 		laser.startAnimation();
 		laser.setVisible(true);
 		soundPool.play(laserAudioID, 1, 1, 1, 0, 1);
@@ -304,13 +430,19 @@ public class ShooterLevel extends Choreographer {
 			star.draw(canvas);
 		
 		// Pink enemy circles
-		for (ShooterEnemy enemy : enemies)
-			if (enemy.isVisible())
-				enemy.draw(canvas);
+		for (Enemy enemy : enemies) {
+            if (enemy.isVisible()) {
+                enemy.draw(canvas);
+            }
+        }
 		
 		// Laser
 		if (laser.isVisible())
 			laser.draw(canvas);
+
+        // Gunner canon
+        if (gunner.isVisible())
+            gunner.draw(canvas);
 		
 		// Explosion
 		if (explosion.isVisible())
@@ -320,18 +452,18 @@ public class ShooterLevel extends Choreographer {
 	@Override
 	public boolean onTouch(View v, MotionEvent event) {
 		if (event.getAction() == MotionEvent.ACTION_DOWN) {
-			animateGunner();
+			shoot();
 		
 			super.onTouch(v, event);
 		
 			switch (timingResult) { 
 			case Beats.RESULT_GOOD:
-				currentEnemy.setShotType(ShooterEnemy.SHOT_MAJOR_HIT);
+				currentEnemy.setShotType(Enemy.SHOT_MAJOR_HIT);
 				explosion.setVisible(true);
 				debugTimingResult = "Good";
 				break;
 			case Beats.RESULT_BAD:
-				currentEnemy.setShotType(ShooterEnemy.SHOT_MINOR_HIT);
+				currentEnemy.setShotType(Enemy.SHOT_MINOR_HIT);
 				explosion.setVisible(true);
 				debugTimingResult = "Bad";
 				break;

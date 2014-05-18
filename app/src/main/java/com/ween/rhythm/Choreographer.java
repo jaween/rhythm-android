@@ -65,12 +65,13 @@ public abstract class Choreographer implements Beats.RhythmEvent {
     private int timingCircleColour = Color.BLUE;
     protected String debugTimingResult = ""; // On screen text ('Miss', etc.)
 	
-	public Choreographer(Context context, DisplayMetrics metrics, String playerBeatsFilename, String eventBeatsFilename) {
+	public Choreographer(Context context, DisplayMetrics metrics, String playerBeatsFilename, String eventBeatsFilename, int windowHeight) {
 		this.context = context;
 		
 		dp = metrics.density;
 		screenWidth = metrics.widthPixels;
-		screenHeight = metrics.heightPixels;
+		screenHeight = windowHeight;
+
 		
 		loadBeats(playerBeatsFilename, eventBeatsFilename);
 
@@ -120,6 +121,7 @@ public abstract class Choreographer implements Beats.RhythmEvent {
 	}
 	
 	protected abstract void animate();
+    protected abstract void miss();
 	
 	public void update(long time) {
 		if (!timers.isEmpty()) {
@@ -129,8 +131,9 @@ public abstract class Choreographer implements Beats.RhythmEvent {
                 // Just beore first enemy appeared
 
 
-				// Event delay has finished, remove timer
+				// Event delay has finished, player missed the beat
 				timers.remove();
+                miss();
                 Log.d(TAG, "Timer finished");
 
                 // Removes failed player event
@@ -148,10 +151,6 @@ public abstract class Choreographer implements Beats.RhythmEvent {
 	}
 	
 	public void draw(Canvas canvas) {
-		// Center orange circle
-		debugPaint.setColor(timingCircleColour);
-		canvas.drawCircle(screenWidth/2, 400, 100, debugPaint);
-		
 		// Timer
 		String time = Float.toString(((float) (SystemClock.elapsedRealtime() - beginTime))/1000f);
 		canvas.drawText(time, screenWidth/2 - 55, 550, debugTextPaint);
@@ -166,7 +165,6 @@ public abstract class Choreographer implements Beats.RhythmEvent {
 		// TODO Rework this code, too untidy
 		final int result;
 		long timeOfTouch = SystemClock.elapsedRealtime() - beginTime;
-		Log.d(TAG, "Touched! Current event beat is " + eventBeats.getCurrentBeat() + "(" + timeOfTouch + "), there are " + timers.size() + " timers");
 		if (!timers.isEmpty()) {
 			long timerValue = timers.remove();
 

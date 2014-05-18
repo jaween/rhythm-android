@@ -1,18 +1,31 @@
 package com.ween.rhythm.shooter;
 
 import android.content.Context;
+import android.graphics.Canvas;
 
 import com.ween.rhythm.Entity;
-import com.ween.shooter.R;
+import com.ween.rhythm.R;
 
-public class ShooterEnemy extends Entity {
+public class Enemy extends Entity {
 	
 	public static final int SHOT_NOT_HIT = 0;	// No injury
 	public static final int SHOT_MAJOR_HIT = 1;	// Destroyed on the spot
 	public static final int SHOT_MINOR_HIT = 2;	// Destroyed after falling
-	private int shotType = SHOT_NOT_HIT;	
+	private int shotType = SHOT_NOT_HIT;
+
+    // Determines the sprite for the trail
+    public enum Position {
+        TOP_LEFT, TOP_LEFT_INNER, TOP_RIGHT, TOP_RIGHT_INNER,
+        BOTTOM_LEFT, BOTTOM_LEFT_INNER, BOTTOM_RIGHT, BOTTOM_RIGHT_INNER,
+        CENTER
+    }
+
+    private EnemyMovementTrail movementTrail;
+
+    private static final int FRAMES_PER_MOVEMENT = 16;
+    private int framesUntilNextMovement = FRAMES_PER_MOVEMENT;
 	
-	ShooterEnemy(Context context) {
+	Enemy(Context context) {
 		super(context);
 		
 		// First static sprite (enemy in good condition, not shot)
@@ -23,6 +36,8 @@ public class ShooterEnemy extends Entity {
 		boolean looping = false;
 		loadSpriteSheet(drawableID, width, height, frames, looping);
 		currentSprite.setAnimated(false);
+
+        //movementTrail = new EnemyMovementTrail(context);
 		
 		// Second static sprite (enemy in bad condition)
 		/*int drawableID = R.drawable.enemy;
@@ -42,8 +57,6 @@ public class ShooterEnemy extends Entity {
 		loadSpriteSheet(drawableID, width, height, frames, looping);*/
 		
 		currentSprite = sprites.get(0);
-		
-		
 	}
 	
 	public void setShotType(int shotType) {
@@ -65,4 +78,20 @@ public class ShooterEnemy extends Entity {
 	public int getShotType() {
 		return shotType;
 	}
+
+    public void setPosition(Position position) {
+        movementTrail.setPosition(position);
+    }
+
+    @Override
+    public void draw(Canvas canvas) {
+        super.draw(canvas);
+
+        // After a couple of frames the enemy edges downward
+        framesUntilNextMovement--;
+        if (framesUntilNextMovement <= 0) {
+            setCoordinates(x, y + currentSprite.getScale() * 1.5f);
+            framesUntilNextMovement = FRAMES_PER_MOVEMENT;
+        }
+    }
 }

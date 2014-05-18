@@ -1,12 +1,31 @@
-9:000
-11:000
-13:000
-15:000
-17:000
-19:000
-21:000
-//23000
-//25000
-//27000
-//29000
-//31000
+8:883 // Index 0, Player's move, FIRST WAVE
+9:305
+9:729
+10:152
+12:265 // Index 4, Player's move
+12:685
+13:110
+13:532
+15:645 // Index 8, Player's move
+16:065
+16:488
+16:911
+19:446 // Index 12, Player's move
+20:202
+22:405 // Index 14, Player's move, SECOND WAVE
+22:836
+23:133
+23:537
+25:780 // Index 18, Player's move
+26:204
+26:425
+26:838
+29:191 // Index 22, Player's move
+29:625
+29:908
+30:292
+32:444 // Index 26, Player's move
+32:903
+33:092
+33:502
+// End of timings
