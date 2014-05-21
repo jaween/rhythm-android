@@ -82,7 +82,7 @@ public class Sprite {
 		return animated;
 	}
 
-    public int getFrames() {
+    public int getNumberOfFrames() {
 		return numberOfFrames;
 	}
 	
@@ -91,6 +91,10 @@ public class Sprite {
 		this.frameIndexFloat = frame;
 		updateSourceRect();
 	}
+
+    public int getFrame() {
+        return frameIndex;
+    }
 
     // Selects the current frame from the sprite sheet
 	private void updateSourceRect() {

@@ -34,7 +34,7 @@ public class Star extends Entity {
 	}
 	
 	public void setRandomFrame() {
-		int frame = (int) (Math.random() * currentSprite.getFrames());
+		int frame = (int) (Math.random() * currentSprite.getNumberOfFrames());
 		currentSprite.setFrame(frame);
 	}
 	

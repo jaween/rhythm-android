@@ -37,8 +37,9 @@ public abstract class Choreographer implements Beats.RhythmEvent {
 	protected Beats eventBeats;				// e.g. pea being flicked at player (automatic event)
 	protected Beats playerBeats;			// e.g. fork stabbing pea by player (player's action)
 	
-	// Implementation timing variables
+	// Events and timing variables
 	protected int eventIndex = -1;			// Events are triggered by looking at this index
+    private int currentEventIndex = eventIndex;
 	private Queue<Long> timers;				// The remaining time between the musical 'beat' and the leeway (a few milliseconds)
 	protected long beginTime;
 	private long lastDrawTime;				// Determines when to draw the next frame
@@ -113,52 +114,57 @@ public abstract class Choreographer implements Beats.RhythmEvent {
         Long eventBeat = eventBeats.getCurrentBeat();
 		if (playerBeat != null && eventBeat != null && playerBeat.longValue() <= eventBeat.longValue()) {
 			// We achieve the delay using a queue of timers
-            Log.d(TAG, "Timer added");
+            //Log.d(TAG, "Timer added");
 			timers.add(eventBeats.getCurrentBeat() + Beats.LEEWAY + Beats.MISSED);
 		} else {
 			eventIndex++;
 		}
 	}
-	
+
 	protected abstract void animate();
     protected abstract void miss();
-	
+
 	public void update(long time) {
-		if (!timers.isEmpty()) {
-			if (SystemClock.elapsedRealtime() - beginTime >= timers.peek())
-			{
+        // Timing updates
+        if (!timers.isEmpty()) {
+            if (SystemClock.elapsedRealtime() - beginTime >= timers.peek()) {
                 // TODO Crashed at condition with NullPointerException, why?
                 // Just beore first enemy appeared
 
 
-				// Event delay has finished, player missed the beat
-				timers.remove();
+                // Event delay has finished, player missed the beat
+                timers.remove();
                 miss();
-                Log.d(TAG, "Timer finished");
+                //Log.d(TAG, "Timer finished");
 
                 // Removes failed player event
                 // If we passed in the current time, it would be considered 'way off' and wouldn't poll
                 playerBeats.pollSuccess(playerBeats.getCurrentBeat());
-				
-				// We can now trigger the delayed event (e.g. enemy attacking player)
-				//nextEvent();
-                eventIndex++;
-			}
-		}
 
-		peekState();
-		animate();
+                // We can now trigger the delayed event (e.g. enemy attacking player)
+                //nextEvent();
+                eventIndex++;
+            }
+        }
+
+        peekState();
+        // Performs the setup of the event (only once per event)
+        if (currentEventIndex != eventIndex) {
+            currentEventIndex = eventIndex;
+            animate();
+        }
+
 	}
 	
 	public void draw(Canvas canvas) {
-		// Timer
+		/*// Timer
 		String time = Float.toString(((float) (SystemClock.elapsedRealtime() - beginTime))/1000f);
 		canvas.drawText(time, screenWidth/2 - 55, 550, debugTextPaint);
 		canvas.drawText(debugTimingResult, screenWidth/2 - 55, 600, debugTextPaint);
 		
 		// FPS Indicator
-		canvas.drawText((1000/(SystemClock.elapsedRealtime() - lastDrawTime)) + " FPS", 30, 60, debugTextPaint);
-		lastDrawTime = SystemClock.elapsedRealtime();
+		//canvas.drawText((1000/(SystemClock.elapsedRealtime() - lastDrawTime)) + " FPS", 30, 60, debugTextPaint);
+		lastDrawTime = SystemClock.elapsedRealtime();(*/
 	}
 	
 	public boolean onTouch(View v, MotionEvent event) {
@@ -174,7 +180,7 @@ public abstract class Choreographer implements Beats.RhythmEvent {
 				result = Beats.RESULT_BAD;
 			else
 				result = Beats.RESULT_MISS;
-			Log.d(TAG, "Timer destroyed! Result is " + result);
+			//Log.d(TAG, "Timer destroyed! Result is " + result);
 			eventIndex++;
 
 			playerBeats.pollSuccess(timeOfTouch);

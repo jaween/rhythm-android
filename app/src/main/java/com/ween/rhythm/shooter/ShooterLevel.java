@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -30,9 +31,15 @@ public class ShooterLevel extends Choreographer {
 	
 	// Sound effect IDs
 	private int laserAudioID;
-	
+
+    // Game constants
+    private static final int FRAMES_PER_DAMAGED_BACKGROUND_FLASH = 1;
+
 	// Game variables
-	private int backgroundColour;
+	private int regularBackgroundColour;
+    private int damagedBackgroundColour;
+    private boolean damaged = false;
+    private int flashDamagedBackgroundTimer = 0;
 	
 	// System variables
 	private Context context;
@@ -48,7 +55,8 @@ public class ShooterLevel extends Choreographer {
 	
 	private void initialiseResources() {	
 		// Get colours
-		backgroundColour = context.getResources().getColor(R.color.background_colour);
+		regularBackgroundColour = context.getResources().getColor(R.color.regular_background_colour);
+        damagedBackgroundColour = context.getResources().getColor(R.color.damaged_background_colour);
 
 		// Create the reusable enemy objects
 		final int maxEnemies = 8;
@@ -90,7 +98,8 @@ public class ShooterLevel extends Choreographer {
 		laserAudioID = soundPool.load(context, R.raw.laser_sound, 1);
 		loadBackgroundMusic(R.raw.shooter_music);
 	}
-	
+
+    // Level specific updates
 	@Override
 	public void update(long time) {
 		super.update(time);
@@ -113,23 +122,28 @@ public class ShooterLevel extends Choreographer {
 	// Events that are triggered at certain times
 	@Override
 	protected void animate() {
+        Log.d(TAG, "Event index is now " + eventIndex);
         switch (eventIndex) {
             // FIRST WAVE
             case 0:
                 currentEnemy = enemies.get(0);
                 enemies.get(0).setCoordinates(screenWidth/6 - enemies.get(0).getWidth()/2, screenHeight/6 - enemies.get(0).getHeight()/2);
+                enemies.get(0).setQuadrant(Enemy.Quadrant.TOP_LEFT);
                 enemies.get(0).setVisible(true);
                 break;
             case 1:
                 enemies.get(1).setCoordinates(screenWidth - screenWidth/6 - enemies.get(1).getWidth()/2, screenHeight/6 - enemies.get(1).getHeight()/2);
+                enemies.get(1).setQuadrant(Enemy.Quadrant.TOP_RIGHT);
                 enemies.get(1).setVisible(true);
                 break;
             case 2:
                 enemies.get(2).setCoordinates(screenWidth/6 - enemies.get(2).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(2).getHeight()/2);
+                enemies.get(2).setQuadrant(Enemy.Quadrant.BOTTOM_LEFT);
                 enemies.get(2).setVisible(true);
                 break;
             case 3:
                 enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
+                enemies.get(3).setQuadrant(Enemy.Quadrant.BOTTOM_RIGHT);
                 enemies.get(3).setVisible(true);
                 break;
             case 4:
@@ -153,18 +167,22 @@ public class ShooterLevel extends Choreographer {
                 break;
             case 8:
                 enemies.get(0).setCoordinates(screenWidth/6 - enemies.get(0).getWidth()/2, screenHeight/6 - enemies.get(0).getHeight()/2);
+                enemies.get(0).setQuadrant(Enemy.Quadrant.TOP_LEFT);
                 enemies.get(0).setVisible(true);
                 break;
             case 9:
                 enemies.get(1).setCoordinates(screenWidth - screenWidth/6 - enemies.get(1).getWidth()/2, screenHeight/6 - enemies.get(1).getHeight()/2);
+                enemies.get(1).setQuadrant(Enemy.Quadrant.TOP_RIGHT);
                 enemies.get(1).setVisible(true);
                 break;
             case 10:
                 enemies.get(2).setCoordinates(screenWidth/6 - enemies.get(2).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(2).getHeight()/2);
+                enemies.get(2).setQuadrant(Enemy.Quadrant.BOTTOM_LEFT);
                 enemies.get(2).setVisible(true);
                 break;
             case 11:
                 enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
+                enemies.get(3).setQuadrant(Enemy.Quadrant.BOTTOM_RIGHT);
                 enemies.get(3).setVisible(true);
                 currentEnemy = enemies.get(0);
                 break;
@@ -189,18 +207,22 @@ public class ShooterLevel extends Choreographer {
                 break;
             case 16:
                 enemies.get(0).setCoordinates(screenWidth/6 - enemies.get(0).getWidth()/2, screenHeight/6 - enemies.get(0).getHeight()/2);
+                enemies.get(0).setQuadrant(Enemy.Quadrant.TOP_LEFT);
                 enemies.get(0).setVisible(true);
                 break;
             case 17:
                 enemies.get(1).setCoordinates(screenWidth - screenWidth/6 - enemies.get(1).getWidth()/2, screenHeight/6 - enemies.get(1).getHeight()/2);
+                enemies.get(1).setQuadrant(Enemy.Quadrant.TOP_RIGHT);
                 enemies.get(1).setVisible(true);
                 break;
             case 18:
                 enemies.get(2).setCoordinates(screenWidth/6 - enemies.get(2).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(2).getHeight()/2);
+                enemies.get(2).setQuadrant(Enemy.Quadrant.BOTTOM_LEFT);
                 enemies.get(2).setVisible(true);
                 break;
             case 19:
                 enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
+                enemies.get(3).setQuadrant(Enemy.Quadrant.BOTTOM_RIGHT);
                 enemies.get(3).setVisible(true);
                 currentEnemy = enemies.get(0);
                 break;
@@ -225,10 +247,12 @@ public class ShooterLevel extends Choreographer {
                 break;
             case 24:
                 enemies.get(0).setCoordinates(screenWidth/3 - enemies.get(0).getWidth()/2, screenHeight/4 - enemies.get(0).getHeight()/2);
+                enemies.get(0).setQuadrant(Enemy.Quadrant.TOP_LEFT_INNER);
                 enemies.get(0).setVisible(true);
                 break;
             case 25:
                 enemies.get(1).setCoordinates(screenWidth - screenWidth/3 - enemies.get(1).getWidth()/2, screenHeight/4 - enemies.get(1).getHeight()/2);
+                enemies.get(1).setQuadrant(Enemy.Quadrant.TOP_RIGHT_INNER);
                 enemies.get(1).setVisible(true);
                 currentEnemy = enemies.get(0);
                 break;
@@ -244,18 +268,22 @@ public class ShooterLevel extends Choreographer {
             // SECOND WAVE
             case 28:
                 enemies.get(0).setCoordinates(screenWidth/6 - enemies.get(0).getWidth()/2, screenHeight/6 - enemies.get(0).getHeight()/2);
+                enemies.get(0).setQuadrant(Enemy.Quadrant.TOP_LEFT);
                 enemies.get(0).setVisible(true);
                 break;
             case 29:
                 enemies.get(1).setCoordinates(screenWidth - screenWidth/6 - enemies.get(1).getWidth()/2, screenHeight/6 - enemies.get(1).getHeight()/2);
+                enemies.get(1).setQuadrant(Enemy.Quadrant.TOP_RIGHT);
                 enemies.get(1).setVisible(true);
                 break;
             case 30:
                 enemies.get(2).setCoordinates(screenWidth/6 - enemies.get(2).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(2).getHeight()/2);
+                enemies.get(2).setQuadrant(Enemy.Quadrant.BOTTOM_LEFT);
                 enemies.get(2).setVisible(true);
                 break;
             case 31:
                 enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
+                enemies.get(3).setQuadrant(Enemy.Quadrant.BOTTOM_RIGHT);
                 enemies.get(3).setVisible(true);
                 currentEnemy = enemies.get(0);
                 break;
@@ -280,18 +308,22 @@ public class ShooterLevel extends Choreographer {
                 break;
             case 36:
                 enemies.get(0).setCoordinates(screenWidth/6 - enemies.get(0).getWidth()/2, screenHeight/6 - enemies.get(0).getHeight()/2);
+                enemies.get(0).setQuadrant(Enemy.Quadrant.TOP_LEFT);
                 enemies.get(0).setVisible(true);
                 break;
             case 37:
                 enemies.get(1).setCoordinates(screenWidth - screenWidth/6 - enemies.get(1).getWidth()/2, screenHeight/6 - enemies.get(1).getHeight()/2);
+                enemies.get(1).setQuadrant(Enemy.Quadrant.TOP_RIGHT);
                 enemies.get(1).setVisible(true);
                 break;
             case 38:
                 enemies.get(2).setCoordinates(screenWidth/6 - enemies.get(2).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(2).getHeight()/2);
+                enemies.get(2).setQuadrant(Enemy.Quadrant.BOTTOM_LEFT);
                 enemies.get(2).setVisible(true);
                 break;
             case 39:
                 enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
+                enemies.get(3).setQuadrant(Enemy.Quadrant.BOTTOM_RIGHT);
                 enemies.get(3).setVisible(true);
                 currentEnemy = enemies.get(0);
                 break;
@@ -316,18 +348,22 @@ public class ShooterLevel extends Choreographer {
                 break;
             case 44:
                 enemies.get(0).setCoordinates(screenWidth/6 - enemies.get(0).getWidth()/2, screenHeight/6 - enemies.get(0).getHeight()/2);
+                enemies.get(0).setQuadrant(Enemy.Quadrant.TOP_LEFT);
                 enemies.get(0).setVisible(true);
                 break;
             case 45:
                 enemies.get(1).setCoordinates(screenWidth - screenWidth/6 - enemies.get(1).getWidth()/2, screenHeight/6 - enemies.get(1).getHeight()/2);
+                enemies.get(1).setQuadrant(Enemy.Quadrant.TOP_RIGHT);
                 enemies.get(1).setVisible(true);
                 break;
             case 46:
                 enemies.get(2).setCoordinates(screenWidth/6 - enemies.get(2).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(2).getHeight()/2);
+                enemies.get(2).setQuadrant(Enemy.Quadrant.BOTTOM_LEFT);
                 enemies.get(2).setVisible(true);
                 break;
             case 47:
                 enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
+                enemies.get(3).setQuadrant(Enemy.Quadrant.BOTTOM_RIGHT);
                 enemies.get(3).setVisible(true);
                 currentEnemy = enemies.get(0);
                 break;
@@ -352,18 +388,22 @@ public class ShooterLevel extends Choreographer {
                 break;
             case 52:
                 enemies.get(0).setCoordinates(screenWidth/6 - enemies.get(0).getWidth()/2, screenHeight/6 - enemies.get(0).getHeight()/2);
+                enemies.get(0).setQuadrant(Enemy.Quadrant.TOP_LEFT);
                 enemies.get(0).setVisible(true);
                 break;
             case 53:
                 enemies.get(1).setCoordinates(screenWidth - screenWidth/6 - enemies.get(1).getWidth()/2, screenHeight/6 - enemies.get(1).getHeight()/2);
+                enemies.get(1).setQuadrant(Enemy.Quadrant.TOP_RIGHT);
                 enemies.get(1).setVisible(true);
                 break;
             case 54:
                 enemies.get(2).setCoordinates(screenWidth/6 - enemies.get(2).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(2).getHeight()/2);
+                enemies.get(2).setQuadrant(Enemy.Quadrant.BOTTOM_LEFT);
                 enemies.get(2).setVisible(true);
                 break;
             case 55:
                 enemies.get(3).setCoordinates(screenWidth - screenWidth/6 - enemies.get(3).getWidth()/2, screenHeight/2 - screenHeight/6 - enemies.get(3).getHeight()/2);
+                enemies.get(3).setQuadrant(Enemy.Quadrant.BOTTOM_RIGHT);
                 enemies.get(3).setVisible(true);
                 currentEnemy = enemies.get(0);
                 break;
@@ -391,6 +431,12 @@ public class ShooterLevel extends Choreographer {
 
     @Override
     protected void miss() {
+        currentEnemy.attack();
+
+        // Flashes the background red for a couple frames
+        flashDamagedBackgroundTimer = FRAMES_PER_DAMAGED_BACKGROUND_FLASH;
+        damaged = true;
+
         // Gunner is sad and wobbles for a second
         gunner.startAnimation();
     }
@@ -417,9 +463,19 @@ public class ShooterLevel extends Choreographer {
 	@Override
 	public void draw(Canvas canvas) {
 		// Background
-		canvas.drawColor(backgroundColour);
-		
-		if (earth.isVisible())
+        if (!damaged) {
+            canvas.drawColor(regularBackgroundColour);
+        }
+        else {
+            // Background flashes red for a couple frames when we've been hit
+            canvas.drawColor(damagedBackgroundColour);
+            flashDamagedBackgroundTimer--;
+            if (flashDamagedBackgroundTimer <= 0)
+                damaged = false;
+        }
+
+		// Skips drawing the Earth when damaged (aesthetically pleasing)
+		if (!damaged)
 			earth.draw(canvas);
 		
 		// Debug info
@@ -429,11 +485,9 @@ public class ShooterLevel extends Choreographer {
 		for (Star star : stars)
 			star.draw(canvas);
 		
-		// Pink enemy circles
+		// Enemies
 		for (Enemy enemy : enemies) {
-            if (enemy.isVisible()) {
-                enemy.draw(canvas);
-            }
+            enemy.draw(canvas);
         }
 		
 		// Laser
@@ -441,8 +495,7 @@ public class ShooterLevel extends Choreographer {
 			laser.draw(canvas);
 
         // Gunner canon
-        if (gunner.isVisible())
-            gunner.draw(canvas);
+        gunner.draw(canvas);
 		
 		// Explosion
 		if (explosion.isVisible())

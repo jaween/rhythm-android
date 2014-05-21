@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="background_colour">#202428</color>
+    <color name="regular_background_colour">#202428</color>
+    <color name="damaged_background_colour">#802428</color>
 </resources>

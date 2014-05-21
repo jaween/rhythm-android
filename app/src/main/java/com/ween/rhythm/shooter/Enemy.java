@@ -2,6 +2,7 @@ package com.ween.rhythm.shooter;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.util.Log;
 
 import com.ween.rhythm.Entity;
 import com.ween.rhythm.R;
@@ -14,11 +15,12 @@ public class Enemy extends Entity {
 	private int shotType = SHOT_NOT_HIT;
 
     // Determines the sprite for the trail
-    public enum Position {
+    public enum Quadrant {
         TOP_LEFT, TOP_LEFT_INNER, TOP_RIGHT, TOP_RIGHT_INNER,
         BOTTOM_LEFT, BOTTOM_LEFT_INNER, BOTTOM_RIGHT, BOTTOM_RIGHT_INNER,
         CENTER
     }
+    private Quadrant quadrant;
 
     private EnemyMovementTrail movementTrail;
 
@@ -37,7 +39,7 @@ public class Enemy extends Entity {
 		loadSpriteSheet(drawableID, width, height, frames, looping);
 		currentSprite.setAnimated(false);
 
-        //movementTrail = new EnemyMovementTrail(context);
+        movementTrail = new EnemyMovementTrail(context);
 		
 		// Second static sprite (enemy in bad condition)
 		/*int drawableID = R.drawable.enemy;
@@ -63,34 +65,82 @@ public class Enemy extends Entity {
 		this.shotType = shotType;
 		switch (shotType) {
 			case SHOT_MAJOR_HIT: 
-			//currentSprite = sprites.get(1);
-			visible = false;
-			break;
+			    //currentSprite = sprites
+                movementTrail.setTrailType(EnemyMovementTrail.TrailType.DESTROYING);
+                movementTrail.setVisible(true);
+			    visible = false;
+			    break;
 			case SHOT_MINOR_HIT:
-			visible = false;
-			break;
+			    visible = false;
+                movementTrail.setTrailType(EnemyMovementTrail.TrailType.DESTROYING);
+                movementTrail.setVisible(true);
+
+                /*if (quadrant == any left)
+                    // Do stuff with rightward momentum
+                else if (quadrant == any right)
+                    // Do stuff with leftward momentum
+                else
+                    // Do stuff with downward momentum
+                }*/
+			    break;
 			case SHOT_NOT_HIT: 
-			//currentSprite = sprites.get(0);
-			break;
+			    //currentSprite = sprites.get(0);
+                movementTrail.setTrailType(EnemyMovementTrail.TrailType.APPEARING);
+			    break;
 		}
 	}
+
+    public void attack() {
+        movementTrail.setTrailType(EnemyMovementTrail.TrailType.ATTACKING);
+        movementTrail.setVisible(true);
+    }
 	
 	public int getShotType() {
 		return shotType;
 	}
 
-    public void setPosition(Position position) {
-        movementTrail.setPosition(position);
+    public void setQuadrant(Quadrant quadrant) {
+        movementTrail.setQuadrant(quadrant, getWidth(), getHeight());
+        this.quadrant = quadrant;
+    }
+
+    private void moveDownward() {
+        super.setCoordinates(x, y + currentSprite.getScale() * 1.5f);
+    }
+
+    @Override
+    public void setCoordinates(float x, float y) {
+        super.setCoordinates(x, y);
+        movementTrail.setCoordinates(x, y);
+    }
+
+    @Override
+    public void setVisible(boolean visible) {
+        if (this.visible && visible)
+            Log.e("Enemy", "Enemy is already visible!");
+        super.setVisible(visible);
+
+        // The enemy shouldn't hide the trail, but if the enemy becomes visible, the trail should too
+        if (visible)
+            movementTrail.setVisible(visible);
     }
 
     @Override
     public void draw(Canvas canvas) {
-        super.draw(canvas);
+        // Trail can still be drawn even if the enemy is invisible
+        if (movementTrail.isVisible()) {
+            movementTrail.draw(canvas);
+            if (!visible)
+                Log.d("Enemy", "Trail drawing when enemy invisible");
+        }
 
-        // After a couple of frames the enemy edges downward
+        if (visible)
+            super.draw(canvas);
+
+        // After a few frames the enemy edges downward
         framesUntilNextMovement--;
         if (framesUntilNextMovement <= 0) {
-            setCoordinates(x, y + currentSprite.getScale() * 1.5f);
+            moveDownward();
             framesUntilNextMovement = FRAMES_PER_MOVEMENT;
         }
     }
